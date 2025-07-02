@@ -3,10 +3,10 @@
 namespace Model;
 
 use Exception;
+use src\Entity\User;
 use InvalidArgumentException;
 use PDO;
 use PDOException;
-use src\helper\UserHelper;
 
 require_once __DIR__ . '/../../Helper/Database.php';
 
@@ -22,34 +22,42 @@ class UserModel
     /**
      * @throws Exception
      */
-    public function save(array $userData): int
+    public function save(User $user): int
     {
         try {
-            UserHelper::validateRequiredFields($userData);
-            $normalizedData = UserHelper::normalizeUserData($userData);
 
             $sql = "INSERT INTO user (
-                first_name, 
-                last_name, 
-                middle_name, 
-                gender, 
-                birth_date, 
-                email, 
-                phone, 
-                avatar_path
-            ) VALUES (
-                :first_name, 
-                :last_name, 
-                :middle_name, 
-                :gender, 
-                :birth_date, 
-                :email, 
-                :phone, 
-                :avatar_path
-            )";
+            first_name, 
+            last_name, 
+            middle_name, 
+            gender, 
+            birth_date, 
+            email, 
+            phone, 
+            avatar_path
+        ) VALUES (
+            :first_name, 
+            :last_name, 
+            :middle_name, 
+            :gender, 
+            :birth_date, 
+            :email, 
+            :phone, 
+            :avatar_path
+        )";
 
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute($normalizedData);
+            $stmt->execute([
+                ':first_name' => $user->getFirstName(),
+                ':last_name' => $user->getLastName(),
+                ':middle_name' => $user->getMiddleName(),
+                ':gender' => $user->getGender(),
+                ':birth_date' => $user->getBirthDate(),
+                ':email' => $user->getEmail(),
+                ':phone' => $user->getPhone(),
+                ':avatar_path' => $user->getAvatarPath(),
+            ]);
+
             return (int)$this->pdo->lastInsertId();
 
         } catch (PDOException $e) {
@@ -67,7 +75,7 @@ class UserModel
         }
     }
 
-    public function find(int $userId): ?array
+    public function find(int $userId): ?User
     {
         $sql = "
         SELECT 
@@ -86,10 +94,20 @@ class UserModel
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute([':user_id' => $userId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        if ($user) {
-            return $user;
+        if ($row) {
+            return new User(
+                id: (int)$row['user_id'],
+                firstName: $row['first_name'],
+                lastName: $row['last_name'],
+                middleName: $row['middle_name'] !== '' ? $row['middle_name'] : null,
+                gender: $row['gender'],
+                birthDate: $row['birth_date'],
+                email: $row['email'],
+                phone: $row['phone'],
+                avatarPath: $row['avatar_path'] !== '' ? $row['avatar_path'] : null
+            );
         }
 
         return null;

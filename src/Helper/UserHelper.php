@@ -25,14 +25,14 @@ class UserHelper
     public static function normalizeUserData(array $userData): array
     {
         return [
-            ':first_name' => trim($userData['first_name']),
-            ':last_name' => trim($userData['last_name']),
-            ':middle_name' => isset($userData['middle_name']) ? trim($userData['middle_name']) : null,
-            ':gender' => $userData['gender'],
-            ':birth_date' => self::formatBirthDate($userData['birth_date']),
-            ':email' => strtolower(trim($userData['email'])),
-            ':phone' => isset($userData['phone']) ? self::normalizePhone($userData['phone']) : null,
-            ':avatar_path' => $userData['avatar_path'] ?? null
+            'first_name' => trim($userData['first_name']),
+            'last_name' => trim($userData['last_name']),
+            'middle_name' => isset($userData['middle_name']) ? trim($userData['middle_name']) : '',
+            'gender' => $userData['gender'],
+            'birth_date' => self::formatBirthDate($userData['birth_date']),
+            'email' => strtolower(trim($userData['email'])),
+            'phone' => isset($userData['phone']) ? self::normalizePhone($userData['phone']) : '',
+            'avatar_path' => $userData['avatar_path'] ?? '',
         ];
     }
 

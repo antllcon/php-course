@@ -1,10 +1,12 @@
 <?php
 
 namespace Controller;
-
 use Exception;
 use JetBrains\PhpStorm\NoReturn;
 use Model\UserModel;
+use src\Entity\User;
+use src\helper\UserHelper;
+require_once __DIR__ . '/../../Entity/User.php';
 
 class AppController
 {
@@ -35,7 +37,21 @@ class AppController
 
         $pdo = connectDatabase();
         $userModel = new UserModel($pdo);
-        $userId = $userModel->save($userData);
+        UserHelper::validateRequiredFields($userData);
+        $normalizedData = UserHelper::normalizeUserData($userData);
+
+        $user = new User(
+            id: null,
+            firstName: $normalizedData['first_name'],
+            lastName: $normalizedData['last_name'],
+            middleName: $normalizedData['middle_name'],
+            gender: $normalizedData['gender'],
+            birthDate: $normalizedData['birth_date'],
+            email: $normalizedData['email'],
+            phone: $normalizedData['phone'],
+            avatarPath: $normalizedData['avatar_path']
+        );
+        $userId = $userModel->save($user);
 
         header("Location: /user/" . $userId);
         exit();
@@ -43,17 +59,19 @@ class AppController
 
     private static function getPath(): ?string
     {
-        $avatarPath = null;
-
-        if (!empty($_FILES['avatar']['tmp_name'])) {
-            $uploadsDir = __DIR__ . '/../../../public/uploads/';
-            $filename = uniqid() . '_' . basename($_FILES['avatar']['name']);
-            $destination = $uploadsDir . $filename;
-            move_uploaded_file($_FILES['avatar']['tmp_name'], $destination);
-            $avatarPath = '/uploads/' . $filename;
+        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
+            return null;
         }
 
-        return $avatarPath;
+        $uploadsDir = __DIR__ . '/../../../public/uploads/';
+        $filename = uniqid() . '_' . basename($_FILES['avatar']['name']);
+        $destination = $uploadsDir . $filename;
+
+        if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $destination)) {
+            throw new \RuntimeException('Save failed');
+        }
+
+        return '/uploads/' . $filename;
     }
 }
 
