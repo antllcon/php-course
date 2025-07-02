@@ -1,45 +1,6 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Inter", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-}
+/* show_user.css */
 
-body {
-    background-color: #ffffff;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
-
-h1 {
-    color: #2c3e50;
-    text-align: center;
-    margin-bottom: 30px;
-}
-
-button {
-    background-color: #494949;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    min-width: 20%;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #2980b9;
-}
+@import url('common.css');
 
 /* Стили для контейнера с данными пользователя */
 .user-profile-container {
@@ -52,8 +13,6 @@ button:hover {
 }
 
 .user-profile-container h2 {
-    color: #2c3e50;
-    text-align: center;
     margin-bottom: 25px;
     font-size: 24px;
 }

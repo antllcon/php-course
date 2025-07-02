@@ -1,22 +1,6 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Inter", sans-serif;
-    font-optical-sizing: auto;
-    font-style: normal;
-}
+/* register.css */
 
-body {
-    background-color: #ffffff;
-    margin: 0;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-}
+@import url('common.css');
 
 .form-container {
     background-color: #ffffff;
@@ -25,12 +9,6 @@ body {
     padding: 30px;
     width: 100%;
     max-width: 400px;
-}
-
-h1 {
-    color: #2c3e50;
-    text-align: center;
-    margin-bottom: 30px;
 }
 
 .form-group {
@@ -85,23 +63,6 @@ select:focus {
 
 .radio-option input {
     margin-right: 8px;
-}
-
-button {
-    background-color: #494949;
-    color: white;
-    border: none;
-    padding: 12px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    font-weight: 600;
-    min-width: 20%;
-    transition: background-color 0.3s;
-}
-
-button:hover {
-    background-color: #2980b9;
 }
 
 .avatar-upload {
