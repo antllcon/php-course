@@ -1,6 +1,9 @@
 <?php
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/helper/UserHelper.php';
+
+use helper\UserHelper;
 
 function connectDatabase(): PDO
 {
@@ -18,12 +21,16 @@ function connectDatabase(): PDO
     }
 }
 
+/**
+ * @throws Exception
+ */
 function saveUserToDatabase(PDO $pdo, array $userParams): int
 {
-    validateRequiredFields($userParams);
-    $normalizedData = normalizeUserData($userParams);
+    try {
+        UserHelper::validateRequiredFields($userParams);
+        $normalizedData = UserHelper::normalizeUserData($userParams);
 
-    $sql = "INSERT INTO user (
+        $sql = "INSERT INTO user (
                 first_name, 
                 last_name, 
                 middle_name, 
@@ -43,63 +50,39 @@ function saveUserToDatabase(PDO $pdo, array $userParams): int
                 :avatar_path
             )";
 
-    try {
         $stmt = $pdo->prepare($sql);
         $stmt->execute($normalizedData);
         return (int)$pdo->lastInsertId();
+
     } catch (PDOException $e) {
         if (str_contains($e->getMessage(), 'Duplicate entry')) {
 
             if (str_contains($e->getMessage(), 'email_idx')) {
-                throw new InvalidArgumentException('Пользователь с таким email уже существует');
+                throw new InvalidArgumentException(' Email id already exists');
             }
             if (str_contains($e->getMessage(), 'phone_idx')) {
-                throw new InvalidArgumentException('Пользователь с таким телефоном уже существует');
+                throw new InvalidArgumentException('Phone id already exists');
             }
         }
+
         throw $e;
     }
 }
 
-function validateRequiredFields(array $userParams): void
-{
-    $missingFields = array_filter(USER_REQUIRED_FIELDS, fn($field) => empty($userParams[$field]));
+$pdo = connectDatabase();
 
-    if ($missingFields) {
-        throw new InvalidArgumentException(
-            'Required fields are not specified: ' . implode(', ', $missingFields)
-        );
-    }
-}
+$testUser = [
+    'first_name' => 'Степан',
+    'last_name' => 'Глухарев',
+    'gender' => 'male',
+    'birth_date' => '2005-10-07',
+    'email' => 'pokeomivan32@gmail.com',
+    'phone' => '+79194186248'
+];
 
-function normalizeUserData(array $userData): array
-{
-    return [
-        ':first_name' => trim($userData['first_name']),
-        ':last_name' => trim($userData['last_name']),
-        ':middle_name' => isset($userData['middle_name']) ? trim($userData['middle_name']) : null,
-        ':gender' => $userData['gender'],
-        ':birth_date' => formatBirthDate($userData['birth_date']),
-        ':email' => strtolower(trim($userData['email'])),
-        ':phone' => isset($userData['phone']) ? normalizePhone($userData['phone']) : null,
-        ':avatar_path' => $userData['avatar_path'] ?? null
-    ];
-}
-
-function formatBirthDate($birthDate): string
-{
-    if ($birthDate instanceof DateTime) {
-        return $birthDate->format('Y-m-d H:i:s');
-    }
-
-    try {
-        return (new DateTime($birthDate))->format('Y-m-d H:i:s');
-    } catch (Exception $e) {
-        throw new InvalidArgumentException('Invalid birth date: ' . $e->getMessage());
-    }
-}
-
-function normalizePhone(string $phone): string
-{
-    return preg_replace('/[^0-9+]/', '', $phone);
+try {
+    $userId = saveUserToDatabase($pdo, $testUser);
+    echo "New uer id: " . $userId;
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
 }
