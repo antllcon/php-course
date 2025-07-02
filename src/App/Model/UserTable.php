@@ -10,13 +10,11 @@ use PDOException;
 
 require_once __DIR__ . '/../../Helper/Database.php';
 
-class UserModel
+class UserTable
 {
-    private PDO $pdo;
 
-    public function __construct(PDO $pdo)
+    public function __construct(private PDO $pdo)
     {
-        $this->pdo = $pdo;
     }
 
     /**

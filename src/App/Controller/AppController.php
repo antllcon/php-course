@@ -3,7 +3,7 @@
 namespace Controller;
 use Exception;
 use JetBrains\PhpStorm\NoReturn;
-use Model\UserModel;
+use Model\UserTable;
 use src\Entity\User;
 use src\helper\UserHelper;
 require_once __DIR__ . '/../../Entity/User.php';
@@ -36,7 +36,7 @@ class AppController
         ];
 
         $pdo = connectDatabase();
-        $userModel = new UserModel($pdo);
+        $userModel = new UserTable($pdo);
         UserHelper::validateRequiredFields($userData);
         $normalizedData = UserHelper::normalizeUserData($userData);
 

@@ -2,15 +2,15 @@
 
 namespace Controller;
 
-require_once __DIR__ . '/../Model/UserModel.php';
-use Model\UserModel;
+require_once __DIR__ . '/../Model/UserTable.php';
+use Model\UserTable;
 
 class UserController
 {
     public function show(int $userId): void
     {
         $pdo = connectDatabase();
-        $userModel = new UserModel($pdo);
+        $userModel = new UserTable($pdo);
         $user = $userModel->find($userId);
 
         if (!$user) {

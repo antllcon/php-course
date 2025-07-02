@@ -1,40 +1,21 @@
 <?php
 
-
 namespace src\Entity;
 class User
 {
-    private ?int $id;
-    private string $firstName;
-    private string $lastName;
-    private ?string $middleName;
-    private ?string $gender;
-    private ?string $birthDate;
-    private string $email;
-    private ?string $phone;
-    private ?string $avatarPath;
 
     public function __construct(
-        ?int    $id,
-        string  $firstName,
-        string  $lastName,
-        ?string $middleName,
-        ?string $gender,
-        ?string $birthDate,
-        string  $email,
-        ?string $phone,
-        ?string $avatarPath
+        private ?int    $id,
+        private string  $firstName,
+        private string  $lastName,
+        private ?string $middleName,
+        private ?string $gender,
+        private ?string $birthDate,
+        private string  $email,
+        private ?string $phone,
+        private ?string $avatarPath
     )
     {
-        $this->id = $id;
-        $this->firstName = $firstName;
-        $this->lastName = $lastName;
-        $this->middleName = $middleName;
-        $this->gender = $gender;
-        $this->birthDate = $birthDate;
-        $this->email = $email;
-        $this->phone = $phone;
-        $this->avatarPath = $avatarPath;
     }
 
     public function getId(): ?int
