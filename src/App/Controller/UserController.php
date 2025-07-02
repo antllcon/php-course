@@ -9,7 +9,8 @@ class UserController
 {
     public function show(int $userId): void
     {
-        $userModel = new UserModel();
+        $pdo = connectDatabase();
+        $userModel = new UserModel($pdo);
         $user = $userModel->find($userId);
 
         if (!$user) {
@@ -18,7 +19,6 @@ class UserController
             return;
         }
 
-        // Написать
-        require __DIR__ . '/../View/user_show.php';
+        require __DIR__ . '/../View/show_user.php';
     }
 }

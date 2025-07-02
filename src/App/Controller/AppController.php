@@ -6,7 +6,7 @@ use Exception;
 use JetBrains\PhpStorm\NoReturn;
 use Model\UserModel;
 
-class RegisterController
+class AppController
 {
     public function __construct()
     {
@@ -22,19 +22,6 @@ class RegisterController
      */
     #[NoReturn] public function register(): void
     {
-        $avatarPath = null;
-        // Вынести создание аватара в метод
-        if (!empty($_FILES['avatar']['tmp_name'])) {
-            // Мб вынести в CONST
-            $uploadsDir = __DIR__ . '/../../../public/uploads/';
-
-            $filename = uniqid() . '_' . basename($_FILES['avatar']['name']);
-            $destination = $uploadsDir . $filename;
-            move_uploaded_file($_FILES['avatar']['tmp_name'], $destination);
-
-            $avatarPath = '/uploads/' . $filename;
-        }
-
         $userData = [
             'first_name' => $_POST['first_name'] ?? '',
             'last_name' => $_POST['last_name'] ?? '',
@@ -43,14 +30,30 @@ class RegisterController
             'birth_date' => $_POST['birth_date'] ?? '',
             'email' => $_POST['email'] ?? '',
             'phone' => $_POST['phone'] ?? '',
-            'avatar_path' => $avatarPath,
+            'avatar_path' => self::getPath(),
         ];
 
-        // Норм ли создавать новый UserModel
-        $userModel = new UserModel();
+        $pdo = connectDatabase();
+        $userModel = new UserModel($pdo);
         $userId = $userModel->save($userData);
 
         header("Location: /user/" . $userId);
-        exit;
+        exit();
+    }
+
+    private static function getPath(): ?string
+    {
+        $avatarPath = null;
+
+        if (!empty($_FILES['avatar']['tmp_name'])) {
+            $uploadsDir = __DIR__ . '/../../../public/uploads/';
+            $filename = uniqid() . '_' . basename($_FILES['avatar']['name']);
+            $destination = $uploadsDir . $filename;
+            move_uploaded_file($_FILES['avatar']['tmp_name'], $destination);
+            $avatarPath = '/uploads/' . $filename;
+        }
+
+        return $avatarPath;
     }
 }
+
