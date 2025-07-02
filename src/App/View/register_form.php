@@ -1,7 +1,3 @@
-<?php
-
-?>
-
 <html lang="ru">
 <head>
     <title>App</title>
@@ -72,7 +68,6 @@
     </form>
 
     <script>
-        // TODO: разобраться
         // Превью аватарки
         document.getElementById('avatarUpload').addEventListener('change', function (e) {
             const file = e.target.files[0];

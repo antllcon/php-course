@@ -1,0 +1,90 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: "Inter", sans-serif;
+    font-optical-sizing: auto;
+    font-style: normal;
+}
+
+body {
+    background-color: #ffffff;
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+h1 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+button {
+    background-color: #494949;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    min-width: 20%;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+/* Стили для контейнера с данными пользователя */
+.user-profile-container {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 30px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+}
+
+.user-profile-container h2 {
+    color: #2c3e50;
+    text-align: center;
+    margin-bottom: 25px;
+    font-size: 24px;
+}
+
+/* Стили для списка с данными */
+.user-details {
+    list-style: none;
+    width: 100%;
+}
+
+.user-details li {
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+}
+
+.user-details li:last-child {
+    border-bottom: none;
+}
+
+/* Стили для меток и значений */
+.user-details li span:first-child {
+    font-weight: 600;
+    color: #34495e;
+    min-width: 120px;
+}
+
+.user-details li span:last-child {
+    color: #2c3e50;
+    text-align: right;
+    flex-grow: 1;
+    padding-left: 15px;
+}

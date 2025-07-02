@@ -8,7 +8,7 @@ use PDO;
 use PDOException;
 use src\helper\UserHelper;
 
-require_once __DIR__ . '/../../helper/Database.php';
+require_once __DIR__ . '/../../Helper/Database.php';
 
 class UserModel
 {
