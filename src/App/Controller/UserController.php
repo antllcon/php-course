@@ -19,6 +19,6 @@ class UserController
             return;
         }
 
-        require __DIR__ . '/../View/show_user.php';
+        require_once __DIR__ . '/../View/show_user.php';
     }
 }
