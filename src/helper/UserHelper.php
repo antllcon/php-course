@@ -1,6 +1,6 @@
 <?php
 
-namespace helper;
+namespace src\helper;
 
 use DateTime;
 use Exception;
