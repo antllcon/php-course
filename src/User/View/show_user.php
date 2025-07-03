@@ -9,7 +9,7 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Пользователь <?= htmlspecialchars($user->getFirstName()) ?></title>
+    <title>Profile</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
           rel="stylesheet">
     <link rel="stylesheet" href="../../../public/assets/css/common.css">
@@ -32,7 +32,7 @@
         <li><span>Email:</span> <span><?= htmlspecialchars($user->getEmail()) ?></span></li>
         <li><span>Телефон:</span> <span><?= htmlspecialchars($user->getPhone()) ?></span></li>
     </ul>
-    <button onclick="window.location.href='/register'">Зарегистрировать нового пользователя</button>
+    <button onclick="window.location.href='/register'">Создать нового пользователя</button>
 </div>
 
 </body>
