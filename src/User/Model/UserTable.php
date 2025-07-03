@@ -9,8 +9,6 @@ use InvalidArgumentException;
 use PDO;
 use PDOException;
 
-require_once __DIR__ . '/../../Connection/Database.php';
-
 class UserTable
 {
 

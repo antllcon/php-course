@@ -51,7 +51,17 @@ class UserController
      */
     #[NoReturn] public function register(): void
     {
-        $userData = [
+        $userData = self::getUserInput();
+        self::validateRequiredFields($userData);
+        $normalizedData = self::normalizeUserData($userData);
+        $user = self::createUserEntity($normalizedData);
+        $userId = self::saveUser($user);
+        self::redirectToUserProfile($userId);
+    }
+
+    private function getUserInput(): array
+    {
+        return [
             'first_name' => $_POST['first_name'] ?? '',
             'last_name' => $_POST['last_name'] ?? '',
             'middle_name' => $_POST['middle_name'] ?? '',
@@ -61,13 +71,11 @@ class UserController
             'phone' => $_POST['phone'] ?? '',
             'avatar_path' => self::getPath(),
         ];
+    }
 
-        $pdo = Database::getConnection();
-        $userModel = new UserTable($pdo);
-        self::validateRequiredFields($userData);
-        $normalizedData = self::normalizeUserData($userData);
-
-        $user = new User(
+    private function createUserEntity(array $normalizedData): User
+    {
+        return new User(
             id: null,
             firstName: $normalizedData['first_name'],
             lastName: $normalizedData['last_name'],
@@ -78,8 +86,21 @@ class UserController
             phone: $normalizedData['phone'],
             avatarPath: $normalizedData['avatar_path']
         );
-        $userId = $userModel->save($user);
+    }
 
+    /**
+     * @throws Exception
+     */
+    private function saveUser(User $user): int
+    {
+        $pdo = Database::getConnection();
+        $userModel = new UserTable($pdo);
+
+        return $userModel->save($user);
+    }
+
+    #[NoReturn] private function redirectToUserProfile(int $userId): void
+    {
         header("Location: /user/" . $userId);
         exit();
     }
