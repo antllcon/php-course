@@ -1,14 +1,15 @@
 <?php
+declare(strict_types=1);
 
-namespace Model;
+namespace App\User\Model;
 
+use App\User\Model\Entity\User;
 use Exception;
-use src\Entity\User;
 use InvalidArgumentException;
 use PDO;
 use PDOException;
 
-require_once __DIR__ . '/../../Helper/Database.php';
+require_once __DIR__ . '/../../Connection/Database.php';
 
 class UserTable
 {
@@ -45,16 +46,7 @@ class UserTable
         )";
 
             $stmt = $this->pdo->prepare($sql);
-            $stmt->execute([
-                ':first_name' => $user->getFirstName(),
-                ':last_name' => $user->getLastName(),
-                ':middle_name' => $user->getMiddleName(),
-                ':gender' => $user->getGender(),
-                ':birth_date' => $user->getBirthDate(),
-                ':email' => $user->getEmail(),
-                ':phone' => $user->getPhone(),
-                ':avatar_path' => $user->getAvatarPath(),
-            ]);
+            $stmt->execute($user->toArray());
 
             return (int)$this->pdo->lastInsertId();
 
@@ -75,6 +67,7 @@ class UserTable
 
     public function find(int $userId): ?User
     {
+
         $sql = "
         SELECT 
             `user_id`,

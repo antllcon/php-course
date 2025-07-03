@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
           rel="stylesheet">
-    <link rel="stylesheet" href="/src/App/View/common.css">
-    <link rel="stylesheet" href="/src/App/View/register.css">
+    <link rel="stylesheet" href="../../../public/assets/css/common.css">
+    <link rel="stylesheet" href="../../../public/assets/css/register.css">
 </head>
 <body>
 <h1>Регистрация</h1>

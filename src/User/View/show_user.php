@@ -1,9 +1,7 @@
 <?php
 /**
- * @var User $user
+ * @var $user
  */
-
-use src\Entity\User;
 
 ?>
 
@@ -14,8 +12,8 @@ use src\Entity\User;
     <title>Пользователь <?= htmlspecialchars($user->getFirstName()) ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
           rel="stylesheet">
-    <link rel="stylesheet" href="/src/App/View/common.css">
-    <link rel="stylesheet" href="/src/App/View/show_user.css">
+    <link rel="stylesheet" href="../../../public/assets/css/common.css">
+    <link rel="stylesheet" href="../../../public/assets/css/show_user.css">
 </head>
 <body>
 

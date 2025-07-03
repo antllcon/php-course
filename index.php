@@ -1,12 +1,11 @@
 <?php
 
-use Controller\AppController;
-use Controller\UserController;
+use App\User\Controller\UserController;
 
-require_once __DIR__ . '/src/App/Controller/UserController.php';
-require_once __DIR__ . '/src/App/Controller/AppController.php';
+require_once "vendor/autoload.php";
 
 $path = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$userController = new UserController();
 
 switch ($path) {
     case '/':
@@ -14,12 +13,12 @@ switch ($path) {
         exit;
 
     case '/register':
-        (new AppController())->index();
+        $userController->index();
         break;
 
     case '/register/save':
         try {
-            (new AppController())->register();
+            $userController->register();
         } catch (Exception $e) {
             echo "Registration error: " . $e->getMessage();
         }
@@ -27,7 +26,7 @@ switch ($path) {
 
     case (bool)preg_match('#^/user/(\d+)$#', $path, $matches):
         $userId = (int)$matches[1];
-        (new UserController())->show($userId);
+        $userController->show($userId);
         break;
 
     default:
