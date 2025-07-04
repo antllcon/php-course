@@ -47,3 +47,24 @@
     flex-grow: 1;
     padding-left: 15px;
 }
+
+/* Стили для контейнера с кнопками */
+.user-profile-container {
+    /* Остальные стили... */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Контейнер для кнопок (можно обернуть их в div в HTML) */
+.button-group {
+    display: flex;
+    gap: 15px; /* Отступ между кнопками */
+    margin-top: 20px;
+}
+
+/* Опционально: сделать кнопки одинаковой ширины */
+.button-group button {
+    flex: 1;
+    min-width: 120px;
+}

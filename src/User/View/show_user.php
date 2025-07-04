@@ -32,7 +32,11 @@
         <li><span>Email:</span> <span><?= htmlspecialchars($user->getEmail()) ?></span></li>
         <li><span>Телефон:</span> <span><?= htmlspecialchars($user->getPhone()) ?></span></li>
     </ul>
-    <button onclick="window.location.href='/register'">Создать нового пользователя</button>
+    <div class="button-group">
+        <button onclick="window.location.href='/register'">Создать</button>
+        <button onclick="window.location.href='/user/edit'">Изменить</button>
+        <button onclick="window.location.href='/user/delete'">Удалить</button>
+    </div>
 </div>
 
 </body>
