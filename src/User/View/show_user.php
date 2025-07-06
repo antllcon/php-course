@@ -1,6 +1,7 @@
 <?php
 /**
  * @var $user
+ * @var $userId
  */
 
 ?>
@@ -10,6 +11,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Profile</title>
+    <link rel="icon" href="/public/assets/icons/favicon.ico" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
           rel="stylesheet">
     <link rel="stylesheet" href="../../../public/assets/css/common.css">
@@ -34,8 +36,8 @@
     </ul>
     <div class="button-group">
         <button onclick="window.location.href='/register'">Создать</button>
-        <button onclick="window.location.href='/user/edit'">Изменить</button>
-        <button onclick="window.location.href='/user/delete'">Удалить</button>
+        <button onclick="window.location.href='/user/<?= $userId ?>/edit'">Изменить</button>
+        <button onclick="window.location.href='/user/<?= $userId ?>/delete'">Удалить</button>
     </div>
 </div>
 

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\User\Controller;
 
-use App\Connection\Database;
 use App\User\Model\Entity\User;
 use App\User\Model\UserTable;
 use DateTime;
@@ -21,8 +20,19 @@ class UserController
         'birth_date',
         'email'
     ];
+    private const USER_ALLOWED_FIELDS = [
+        'first_name',
+        'last_name',
+        'middle_name',
+        'gender',
+        'birth_date',
+        'email',
+        'phone',
+        'avatar_path',
+        'remove_avatar'
+    ];
 
-    public function __construct()
+    public function __construct(private UserTable $userTable)
     {
     }
 
@@ -31,35 +41,144 @@ class UserController
         require_once __DIR__ . '/../View/register_form.php';
     }
 
-    public function show(int $userId): void
+    public function showUser(int $userId): void
     {
-        $pdo = Database::getConnection();
-        $userModel = new UserTable($pdo);
-        $user = $userModel->find($userId);
+        $user = $this->getUserOrFail($userId);
+        require_once __DIR__ . '/../View/show_user.php';
+    }
 
-        if (!$user) {
-            http_response_code(404);
-            echo 'User not found';
-            return;
+    /**
+     * @param array<string, mixed> $data
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    #[NoReturn] public function editUser(int $userId, array $data): void
+    {
+        try {
+        $user = $this->getUserOrFail($userId);
+        self::updateAvatar($user, $data);
+        unset($data['avatar']);
+        unset($data['remove_avatar']);
+
+        self::updateAllowedFields($user, $data);
+        self::validateRequiredFields($data);
+        $this->userTable->update($user);
+        $this->redirectToUserProfile($userId);
+
+        } catch (RuntimeException $exception) {
+            $error = $exception->getMessage();
+            $this->showEditForm($userId, $error);
+            exit();
         }
 
-        require_once __DIR__ . '/../View/show_user.php';
+    }
+
+    #[NoReturn] public function deleteUser(int $userId): void
+    {
+        $this->getUserOrFail($userId);
+        $this->userTable->delete($userId);
+        self::redirectToUserList();
     }
 
     /**
      * @throws Exception
      */
-    #[NoReturn] public function register(): void
+    #[NoReturn] public function registerUser(): void
     {
         $userData = self::getUserInput();
         self::validateRequiredFields($userData);
         $normalizedData = self::normalizeUserData($userData);
         $user = self::createUserEntity($normalizedData);
-        $userId = self::saveUser($user);
+        $userId = self::createUser($user);
         self::redirectToUserProfile($userId);
     }
 
-    private function getUserInput(): array
+    public function showEditForm(int $userId, ?string $error = null): void
+    {
+        $user = $this->getUserOrFail($userId);
+        include __DIR__ . '/../View/edit_user.php';
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     */
+    private function getUserOrFail(int $userId): User
+    {
+        $user = $this->userTable->read($userId);
+
+        if ($user === null) {
+            throw new InvalidArgumentException("User with ID $userId not found.");
+        }
+
+        return $user;
+    }
+
+    public function listUsers(): void
+    {
+        $users = $this->userTable->getAllUsers();
+        require_once __DIR__ . '/../View/list_users.php';
+    }
+
+    private function updateAvatar(User $user, array $data): void
+    {
+        if (isset($data['remove_avatar']) && $data['remove_avatar'] === '1') {
+            if ($user->getAvatarPath()) {
+                $oldAvatarPath = __DIR__ . '/../../../public' . $user->getAvatarPath();
+                if (file_exists($oldAvatarPath)) {
+                    unlink($oldAvatarPath);
+                }
+            }
+            $user->setAvatarPath("");
+            unset($data['remove_avatar']);
+            return;
+        }
+
+        $newAvatarPath = self::getPath();
+
+        if ($newAvatarPath) {
+            if ($user->getAvatarPath()) {
+                $oldAvatarPath = __DIR__ . '/../../../public' . $user->getAvatarPath();
+                if (file_exists($oldAvatarPath)) {
+                    unlink($oldAvatarPath);
+                }
+            }
+            $user->setAvatarPath($newAvatarPath);
+        }
+    }
+
+    /**
+     * @throws Exception
+     */
+    private
+    function createUser(User $user): int
+    {
+        return $this->userTable->create($user);
+    }
+
+    /**
+     * @throws InvalidArgumentException
+     * @throws RuntimeException
+     */
+    private
+    function updateAllowedFields(User $user, array $data): void
+    {
+        foreach ($data as $field => $value) {
+            if (!in_array($field, self::USER_ALLOWED_FIELDS, true)) {
+                throw new InvalidArgumentException("Field '$field' is not allowed for update.");
+            }
+
+            // Устанавливаем новое значение (можно добавить валидацию)
+            $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
+            if (!method_exists($user, $setter)) {
+                throw new RuntimeException("Setter method $setter does not exist in User entity.");
+            }
+
+            $user->{$setter}($value);
+        }
+    }
+
+    private
+    function getUserInput(): array
     {
         return [
             'first_name' => $_POST['first_name'] ?? '',
@@ -73,7 +192,8 @@ class UserController
         ];
     }
 
-    private function createUserEntity(array $normalizedData): User
+    private
+    function createUserEntity(array $normalizedData): User
     {
         return new User(
             id: null,
@@ -88,20 +208,22 @@ class UserController
         );
     }
 
-    /**
-     * @throws Exception
-     */
-    private function saveUser(User $user): int
-    {
-        $pdo = Database::getConnection();
-        $userModel = new UserTable($pdo);
-
-        return $userModel->save($user);
-    }
-
-    #[NoReturn] private function redirectToUserProfile(int $userId): void
+    #[
+        NoReturn] private function redirectToUserProfile(int $userId): void
     {
         header("Location: /user/" . $userId);
+        exit();
+    }
+
+    #[NoReturn] private function redirectToRegister(): void
+    {
+        header("Location: /register");
+        exit();
+    }
+
+    #[NoReturn] private function redirectToUserList(): void
+    {
+        header("Location: /users");
         exit();
     }
 
@@ -178,11 +300,11 @@ class UserController
     private static function formatBirthDate($birthDate): string
     {
         if ($birthDate instanceof DateTime) {
-            return $birthDate->format('Y-m-d H:i:s');
+            return $birthDate->format('Y-m-d');
         }
 
         try {
-            return (new DateTime($birthDate))->format('Y-m-d H:i:s');
+            return (new DateTime($birthDate))->format('Y-m-d');
         } catch (Exception $e) {
             throw new InvalidArgumentException('Invalid birth date: ' . $e->getMessage());
         }
