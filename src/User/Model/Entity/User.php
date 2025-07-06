@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 namespace App\User\Model\Entity;
+
 class User
 {
 
@@ -51,12 +52,12 @@ class User
         $this->lastName = $lastName;
     }
 
-    public function getMiddleName(): string
+    public function getMiddleName(): ?string
     {
         return $this->middleName;
     }
 
-    public function setMiddleName(string $middleName): void
+    public function setMiddleName(?string $middleName): void
     {
         $this->middleName = $middleName;
     }
@@ -91,14 +92,24 @@ class User
         $this->email = $email;
     }
 
-    public function getPhone(): string
+    public function getPhone(): ?string
     {
         return $this->phone;
     }
 
-    public function setPhone(string $phone): void
+    public function setPhone(?string $phone): void
     {
         $this->phone = $phone;
+    }
+
+    public function getAvatarPath(): ?string
+    {
+        return $this->avatarPath;
+    }
+
+    public function setAvatarPath(?string $avatarPath): void
+    {
+        $this->avatarPath = $avatarPath;
     }
 
     public function toArray(): array
@@ -113,15 +124,5 @@ class User
             'phone' => $this->phone,
             'avatar_path' => $this->avatarPath,
         ];
-    }
-
-    public function getAvatarPath(): ?string
-    {
-        return $this->avatarPath;
-    }
-
-    public function setAvatarPath(string $avatarPath): void
-    {
-        $this->avatarPath = $avatarPath;
     }
 }
