@@ -44,7 +44,7 @@ try {
             if ($_SERVER['REQUEST_METHOD'] === 'GET') {
                 $userController->showEditForm($userId);
             } elseif ($_SERVER['REQUEST_METHOD'] === 'POST') {
-                $userController->editUser($userId, $_POST);
+                $userController->editUser($userId, $_POST, $_FILES);;
             }
             break;
 
@@ -54,7 +54,6 @@ try {
             break;
 
         default:
-            // TODO: можно сделать обертку для ошибок
             http_response_code(404);
             echo '404 Not Found';
     }

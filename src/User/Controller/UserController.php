@@ -32,6 +32,10 @@ class UserController
         'remove_avatar'
     ];
 
+    private const AVATAR_UPLOAD_DIR = __DIR__ . '/../../../public/uploads/';
+    private const AVATAR_MAX_SIZE = 5 * 1024 * 1024;
+    private const AVATAR_ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif'];
+
     public function __construct(private UserTable $userTable)
     {
     }
@@ -52,20 +56,19 @@ class UserController
      * @throws InvalidArgumentException
      * @throws RuntimeException
      */
-    #[NoReturn] public function editUser(int $userId, array $data): void
+    #[NoReturn] public function editUser(int $userId, array $data, array $filesData): void
     {
         try {
-        $user = $this->getUserOrFail($userId);
-        self::updateAvatar($user, $data);
-        unset($data['avatar']);
-        unset($data['remove_avatar']);
+            $user = $this->getUserOrFail($userId);
+            self::handleAvatarLogic($user, $data, $filesData);
+            unset($data['avatar'], $data['remove_avatar']);
 
-        self::updateAllowedFields($user, $data);
-        self::validateRequiredFields($data);
-        $this->userTable->update($user);
-        $this->redirectToUserProfile($userId);
+            self::updateAllowedFields($user, $data);
+            self::validateRequiredFields($data);
+            $this->userTable->update($user);
+            $this->redirectToUserProfile($userId);
 
-        } catch (RuntimeException $exception) {
+        } catch (RuntimeException|InvalidArgumentException $exception) {
             $error = $exception->getMessage();
             $this->showEditForm($userId, $error);
             exit();
@@ -85,12 +88,22 @@ class UserController
      */
     #[NoReturn] public function registerUser(): void
     {
-        $userData = self::getUserInput();
-        self::validateRequiredFields($userData);
-        $normalizedData = self::normalizeUserData($userData);
-        $user = self::createUserEntity($normalizedData);
-        $userId = self::createUser($user);
-        self::redirectToUserProfile($userId);
+        try {
+            $avatarPath = $this->processUploadedAvatar($_FILES);
+            $userData = self::getUserInput($avatarPath);
+            self::validateRequiredFields($userData);
+            $normalizedData = self::normalizeUserData($userData);
+            $user = self::createUserEntity($normalizedData);
+            $userId = $this->userTable->create($user);
+            self::redirectToUserProfile($userId);
+        } catch (RuntimeException|InvalidArgumentException $exception) {
+
+            // TODO: сохранять введенные пользователем данные
+            $error = $exception->getMessage();
+            require_once __DIR__ . '/../View/register_form.php';
+            exit();
+        }
+
     }
 
     public function showEditForm(int $userId, ?string $error = null): void
@@ -106,6 +119,7 @@ class UserController
     {
         $user = $this->userTable->read($userId);
 
+        // is_null
         if ($user === null) {
             throw new InvalidArgumentException("User with ID $userId not found.");
         }
@@ -119,40 +133,65 @@ class UserController
         require_once __DIR__ . '/../View/list_users.php';
     }
 
-    private function updateAvatar(User $user, array $data): void
+    private function handleAvatarLogic(User $user, array $data, array $filesData): void
     {
-        if (isset($data['remove_avatar']) && $data['remove_avatar'] === '1') {
-            if ($user->getAvatarPath()) {
-                $oldAvatarPath = __DIR__ . '/../../../public' . $user->getAvatarPath();
-                if (file_exists($oldAvatarPath)) {
-                    unlink($oldAvatarPath);
-                }
-            }
-            $user->setAvatarPath("");
-            unset($data['remove_avatar']);
+        $isAvatarRemovalRequested = !empty($postData['remove_avatar']) && $postData['remove_avatar'] === '1';
+
+        if ($isAvatarRemovalRequested) {
+            $this->deleteAvatarFile($user->getAvatarPath());
+            $user->setAvatarPath(null);
             return;
         }
 
-        $newAvatarPath = self::getPath();
-
-        if ($newAvatarPath) {
-            if ($user->getAvatarPath()) {
-                $oldAvatarPath = __DIR__ . '/../../../public' . $user->getAvatarPath();
-                if (file_exists($oldAvatarPath)) {
-                    unlink($oldAvatarPath);
-                }
-            }
+        $uploadedFile = $filesData['avatar'] ?? null;
+        if ($uploadedFile && $uploadedFile['error'] === UPLOAD_ERR_OK) {
+            $newAvatarPath = $this->processUploadedAvatar($uploadedFile);
+            $this->deleteAvatarFile($user->getAvatarPath());
             $user->setAvatarPath($newAvatarPath);
         }
     }
 
-    /**
-     * @throws Exception
-     */
-    private
-    function createUser(User $user): int
+    private function processUploadedAvatar(?array $file): ?string
     {
-        return $this->userTable->create($user);
+        $file = $_FILES['avatar'] ?? null;
+        if (!$file || $file['error'] === UPLOAD_ERR_NO_FILE) {
+            return null;
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new RuntimeException('An error occurred during file upload.');
+        }
+
+        if ($file['size'] > self::AVATAR_MAX_SIZE) {
+            throw new InvalidArgumentException('File is too large. Maximum size is 5MB.');
+        }
+
+        $mimeType = mime_content_type($file['tmp_name']);
+        if (!in_array($mimeType, self::AVATAR_ALLOWED_MIME_TYPES, true)) {
+            throw new InvalidArgumentException('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+        }
+
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = uniqid('avatar_', true) . '.' . $extension;
+        $destination = self::AVATAR_UPLOAD_DIR . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $destination)) {
+            throw new RuntimeException('Failed to save the uploaded file.');
+        }
+
+        return '/uploads/' . $filename;
+    }
+
+    private function deleteAvatarFile(?string $avatarPath): void
+    {
+        if (!$avatarPath) {
+            return;
+        }
+
+        $fullPath = __DIR__ . '/../../../public' . $avatarPath;
+        if (file_exists($fullPath) && is_file($fullPath)) {
+            unlink($fullPath);
+        }
     }
 
     /**
@@ -178,7 +217,7 @@ class UserController
     }
 
     private
-    function getUserInput(): array
+    function getUserInput(?string $avatarPath): array
     {
         return [
             'first_name' => $_POST['first_name'] ?? '',
@@ -188,7 +227,7 @@ class UserController
             'birth_date' => $_POST['birth_date'] ?? '',
             'email' => $_POST['email'] ?? '',
             'phone' => $_POST['phone'] ?? '',
-            'avatar_path' => self::getPath(),
+            'avatar_path' => $avatarPath,
         ];
     }
 
@@ -225,23 +264,6 @@ class UserController
     {
         header("Location: /users");
         exit();
-    }
-
-    private static function getPath(): ?string
-    {
-        if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
-            return null;
-        }
-
-        $uploadsDir = __DIR__ . '/../../../public/uploads/';
-        $filename = uniqid() . '_' . basename($_FILES['avatar']['name']);
-        $destination = $uploadsDir . $filename;
-
-        if (!move_uploaded_file($_FILES['avatar']['tmp_name'], $destination)) {
-            throw new RuntimeException('Save failed');
-        }
-
-        return '/uploads/' . $filename;
     }
 
     private static function validateRequiredFields(array $userParams): void

@@ -37,7 +37,8 @@ use App\User\Model\Entity\User;
                     <span>Фото</span>
                 <?php endif; ?>
             </div>
-            <input type="file" name="avatar" id="avatarUpload" accept="image/*" style="display: none;">
+
+            <input type="file" name="avatar" id="avatarUpload" accept="image/jpeg image/png image/gif" style="display: none;">
             <button type="button" onclick="document.getElementById('avatarUpload').click()">Выбрать фото</button>
             <?php if ($user->getAvatarPath()): ?>
                 <button type="button" onclick="removeAvatar()">Удалить фото</button>
@@ -98,44 +99,47 @@ use App\User\Model\Entity\User;
 </div>
 
 <script>
-    // Превью аватарки
+
+    // Превью фото
     document.getElementById('avatarUpload').addEventListener('change', function (e) {
         const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                const preview = document.getElementById('avatarPreview');
-                preview.style.backgroundImage = `url('${event.target.result}')`;
-                preview.style.backgroundSize = 'cover';
-                preview.style.backgroundPosition = 'center';
-                preview.innerHTML = ''; // Убираем текст "Фото"
-                // Если есть кнопка "Удалить фото", убедимся, что она не скрыта
-                const removeBtn = document.querySelector('.avatar-upload button:nth-of-type(2)');
-                if (removeBtn) removeBtn.style.display = 'block';
-                const removeInput = document.getElementById('removeAvatarInput');
-                if (removeInput) removeInput.value = '0';
-            }
-            reader.readAsDataURL(file);
+        if (!file) {
+            return;
         }
+        const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Неверный тип файла. Пожалуйста, выберите изображение (JPG, PNG, GIF).');
+            e.target.value = '';
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function (event) {
+            const preview = document.getElementById('avatarPreview');
+            preview.style.backgroundImage = `url('${event.target.result}')`;
+            preview.style.backgroundSize = 'cover';
+            preview.style.backgroundPosition = 'center';
+            preview.innerHTML = '';
+        }
+        reader.readAsDataURL(file);
     });
 
-    // Функция для удаления аватарки
     function removeAvatar() {
         const preview = document.getElementById('avatarPreview');
         preview.style.backgroundImage = 'none';
-        preview.innerHTML = '<span>Фото</span>'; // Возвращаем текст "Фото"
+        preview.innerHTML = '<span>Фото</span>';
+
         const removeInput = document.getElementById('removeAvatarInput');
-        if (removeInput) removeInput.value = '1'; // Устанавливаем флаг для удаления
-        // Скрываем кнопку "Удалить фото" после нажатия
-        const removeBtn = document.querySelector('.avatar-upload button:nth-of-type(2)');
+        if (removeInput) removeInput.value = '1';
+
+        const removeBtn = document.querySelector('button[onclick="removeAvatar()"]');
         if (removeBtn) removeBtn.style.display = 'none';
+
+        document.getElementById('avatarUpload').value = '';
     }
 
 
-    // Маска для телефона
     document.getElementById('phone').addEventListener('input', function (e) {
         let x = e.target.value.replace(/\D/g, '').match(/(\d{0,1})(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/);
-        // Добавляем проверку на существование групп, чтобы избежать ошибок для неполных номеров
         let formattedPhone = '';
         if (x) {
             formattedPhone = !x[2] ? x[1] : '+' + x[1] + ' (' + x[2] + ')' + (x[3] ? ' ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
@@ -143,7 +147,6 @@ use App\User\Model\Entity\User;
         e.target.value = formattedPhone;
     });
 
-    // Инициализация маски при загрузке страницы для уже существующего номера
     document.addEventListener('DOMContentLoaded', function() {
         const phoneInput = document.getElementById('phone');
         if (phoneInput.value) {

@@ -70,20 +70,28 @@
     </form>
 
     <script>
-        // Превью аватарки
         document.getElementById('avatarUpload').addEventListener('change', function (e) {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (event) {
-                    const preview = document.getElementById('avatarPreview');
-                    preview.innerHTML = '';
-                    const img = document.createElement('img');
-                    img.src = event.target.result;
-                    preview.appendChild(img);
-                }
-                reader.readAsDataURL(file);
+            if (!file) {
+                return;
             }
+
+            const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('Неверный тип файла. Пожалуйста, выберите изображение (JPG, PNG, GIF).');
+                e.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const preview = document.getElementById('avatarPreview');
+                preview.style.backgroundImage = `url('${event.target.result}')`;
+                preview.style.backgroundSize = 'cover';
+                preview.style.backgroundPosition = 'center';
+                preview.innerHTML = '';
+            }
+            reader.readAsDataURL(file);
         });
 
         // Маска для телефона
