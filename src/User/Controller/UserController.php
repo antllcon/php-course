@@ -98,7 +98,6 @@ class UserController
             self::redirectToUserProfile($userId);
         } catch (RuntimeException|InvalidArgumentException $exception) {
 
-            // TODO: сохранять введенные пользователем данные
             $error = $exception->getMessage();
             require_once __DIR__ . '/../View/register_form.php';
             exit();
