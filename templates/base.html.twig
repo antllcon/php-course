@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}App{% endblock %}</title>
+    <link rel="icon" href="{{ asset('assets/icons/favicon.ico') }}" type="image/x-icon">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="{{ asset('assets/css/common.css') }}">
+    {# Дополнительные CSS-файлы для конкретной страницы #}
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+{% block body %}{% endblock %}
+
+{# Дополнительные JavaScript-файлы для конкретной страницы #}
+{% block javascripts %}{% endblock %}
+</body>
+</html>

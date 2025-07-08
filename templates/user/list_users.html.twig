@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Список пользователей{% endblock %}
+
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('assets/css/list_users.css') }}">
+{% endblock %}
+
+{% block body %}
+    <h1>Список пользователей</h1>
+
+    <div class="user-list-container">
+        {% if users is empty %}
+            <p class="no-users-message">Пользователей пока нет</p>
+        {% else %}
+            <ul class="user-list">
+                {% for user in users %}
+                    <li class="user-item">
+                        <a href="{{ path('user_show', {'id': user.id}) }}" class="user-name">
+                            {{ user.lastName }} {{ user.firstName }} {{ user.middleName }}
+                        </a>
+                        <div class="actions">
+                            <a href="{{ path('user_edit', {'id': user.id}) }}" class="button edit-button">Изменить</a>
+                            <form action="{{ path('user_delete', {'id': user.id}) }}" method="POST" style="display: inline;">
+                                <button type="submit" class="button delete-button" onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?');">Удалить</button>
+                            </form>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        <div class="button-group">
+            <button onclick="window.location.href='{{ path('user_register') }}'">Зарегистрировать нового пользователя</button>
+        </div>
+    </div>
+{% endblock %}

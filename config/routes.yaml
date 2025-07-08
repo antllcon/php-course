@@ -1,0 +1,41 @@
+app_root:
+    path: /
+    methods: [GET]
+    controller: App\Controller\UserController::root
+
+user_list:
+    path: /users
+    methods: [GET]
+    controller: App\Controller\UserController::listUsers
+
+user_register:
+    path: /register
+    methods: [GET]
+    controller: App\Controller\UserController::registerForm
+
+user_register_save:
+    path: /register/save
+    methods: [POST]
+    controller: App\Controller\UserController::registerUser
+
+user_show:
+    path: /user/{id}
+    methods: [GET]
+    controller: App\Controller\UserController::showUser
+    requirements:
+        id: '\d+'
+
+user_edit:
+    path: /user/{id}/edit
+    methods: [GET, POST]
+    controller: App\Controller\UserController::editUser
+    requirements:
+        id: '\d+'
+
+user_delete:
+    path: /user/{id}/delete
+    methods: [POST]
+    controller: App\Controller\UserController::deleteUser
+    requirements:
+        id: '\d+'
+
