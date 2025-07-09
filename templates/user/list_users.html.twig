@@ -9,6 +9,12 @@
 {% block body %}
     <h1>Список пользователей</h1>
 
+    {% if error is defined and error is not empty %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+
     <div class="user-list-container">
         {% if users is empty %}
             <p class="no-users-message">Пользователей пока нет</p>
@@ -21,9 +27,7 @@
                         </a>
                         <div class="actions">
                             <a href="{{ path('user_edit', {'id': user.id}) }}" class="button edit-button">Изменить</a>
-                            <form action="{{ path('user_delete', {'id': user.id}) }}" method="POST" style="display: inline;">
-                                <button type="submit" class="button delete-button" onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?');">Удалить</button>
-                            </form>
+                            <a href="{{ path('user_delete', {'id': user.id}) }}" class="button edit-button">Удалить</a>
                         </div>
                     </li>
                 {% endfor %}

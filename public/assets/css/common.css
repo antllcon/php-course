@@ -44,3 +44,20 @@ h1, h2 {
     text-align: center;
     margin-bottom: 30px;
 }
+
+.alert {
+    padding: 12px 20px;
+    border-radius: 5px;
+    margin: 15px 0;
+    font-size: 16px;
+    font-weight: 500;
+    text-align: center;
+    width: 100%;
+    max-width: 600px;
+}
+
+.alert-danger {
+    background-color: #ffebee;
+    color: #c62828;
+    border: 1px solid #ef9a9a;
+}

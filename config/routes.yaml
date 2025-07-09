@@ -34,7 +34,7 @@ user_edit:
 
 user_delete:
     path: /user/{id}/delete
-    methods: [POST]
+    methods: [GET]
     controller: App\Controller\UserController::deleteUser
     requirements:
         id: '\d+'

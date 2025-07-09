@@ -8,6 +8,13 @@
 
 {% block body %}
     <h1>Регистрация</h1>
+
+    {% if error is defined and error is not empty %}
+        <div class="alert alert-danger">
+            {{ error }}
+        </div>
+    {% endif %}
+
     <div class="form-container">
         <form action="{{ path('user_register_save') }}" method="POST" enctype="multipart/form-data">
             <div class="avatar-upload">
@@ -21,29 +28,34 @@
             <div class="name-fields">
                 <div class="form-group">
                     <label for="last_name">Фамилия</label>
-                    <input type="text" id="last_name" name="last_name" required>
+                    <input type="text" id="last_name" name="last_name" required
+                           value="{{ old_input.last_name is defined ? old_input.last_name : '' }}">
                 </div>
 
                 <div class="form-group">
                     <label for="first_name">Имя</label>
-                    <input type="text" id="first_name" name="first_name" required>
+                    <input type="text" id="first_name" name="first_name" required
+                           value="{{ old_input.first_name is defined ? old_input.first_name : '' }}">
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="middle_name">Отчество</label>
-                <input type="text" id="middle_name" name="middle_name">
+                <input type="text" id="middle_name" name="middle_name"
+                       value="{{ old_input.middle_name is defined ? old_input.middle_name : '' }}">
             </div>
 
             <div class="form-group">
                 <label>Пол</label>
                 <div class="radio-group">
                     <div class="radio-option">
-                        <input type="radio" id="male" name="gender" value="male" required>
+                        <input type="radio" id="male" name="gender" value="male" required
+                            {{ (old_input.gender is defined and old_input.gender == 'male') ? 'checked' : '' }}>
                         <label for="male">Мужской</label>
                     </div>
                     <div class="radio-option">
-                        <input type="radio" id="female" name="gender" value="female">
+                        <input type="radio" id="female" name="gender" value="female"
+                            {{ (old_input.gender is defined and old_input.gender == 'female') ? 'checked' : '' }}>
                         <label for="female">Женский</label>
                     </div>
                 </div>
@@ -51,17 +63,20 @@
 
             <div class="form-group">
                 <label for="birth_date">Дата рождения</label>
-                <input type="date" id="birth_date" name="birth_date" required>
+                <input type="date" id="birth_date" name="birth_date" required
+                       value="{{ old_input.birth_date is defined ? old_input.birth_date : '' }}">
             </div>
 
             <div class="form-group">
                 <label for="email">Email</label>
-                <input type="email" id="email" name="email" required>
+                <input type="email" id="email" name="email" required
+                       value="{{ old_input.email is defined ? old_input.email : '' }}">
             </div>
 
             <div class="form-group">
                 <label for="phone">Телефон</label>
-                <input type="tel" id="phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX">
+                <input type="tel" id="phone" name="phone" placeholder="+7 (XXX) XXX-XX-XX"
+                       value="{{ old_input.phone is defined ? old_input.phone : '' }}">
             </div>
 
             <button type="submit">Зарегистрироваться</button>
@@ -98,6 +113,18 @@
         document.getElementById('phone').addEventListener('input', function (e) {
             let x = e.target.value.replace(/\D/g, '').match(/(\d{0,1})(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/);
             e.target.value = !x[2] ? x[1] : '+' + x[1] + ' (' + x[2] + ') ' + x[3] + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+        });
+
+        document.addEventListener('DOMContentLoaded', function () {
+            const phoneInput = document.getElementById('phone');
+            if (phoneInput.value) {
+                let x = phoneInput.value.replace(/\D/g, '').match(/(\d{0,1})(\d{0,3})(\d{0,3})(\d{0,2})(\d{0,2})/);
+                let formattedPhone = '';
+                if (x) {
+                    formattedPhone = !x[2] ? x[1] : '+' + x[1] + ' (' + x[2] + ')' + (x[3] ? ' ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
+                }
+                phoneInput.value = formattedPhone;
+            }
         });
     </script>
 {% endblock %}

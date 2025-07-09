@@ -41,7 +41,7 @@ class UserController extends AbstractController
 
 
     public function __construct(
-        private UserTable $userTable
+        private readonly UserTable $userTable
     )
     {
     }
@@ -72,13 +72,13 @@ class UserController extends AbstractController
     public function registerUser(Request $request): Response
     {
         try {
-            $avatarPath = $this->processUploadedAvatar($_FILES);
+            $avatarFile = $_FILES['avatar'] ?? null;
+            $avatarPath = $this->processUploadedAvatar($avatarFile);
             $userData = $this->getUserInput($_POST, $avatarPath);
             self::validateRequiredFields($userData);
             $normalizedData = self::normalizeUserData($userData);
             $user = $this->createUserEntity($normalizedData);
             $userId = $this->userTable->create($user);
-
             return $this->redirectToRoute('user_show', ['id' => $userId]);
 
         } catch (RuntimeException|InvalidArgumentException $exception) {
@@ -134,7 +134,6 @@ class UserController extends AbstractController
             return $this->render('user/edit_user.html.twig', [
                 'user' => $user,
                 'error' => $error,
-                'old_input' => $_POST,
             ], new Response('', Response::HTTP_BAD_REQUEST));
         } catch (Exception $e) {
             error_log("Error in editUser for ID {$id}: " . $e->getMessage());
@@ -190,7 +189,6 @@ class UserController extends AbstractController
 
     private function processUploadedAvatar(?array $file): ?string
     {
-        // Если файл не был загружен или произошла ошибка
         if (!$file || $file['error'] === UPLOAD_ERR_NO_FILE) {
             return null;
         }
