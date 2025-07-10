@@ -3,7 +3,7 @@ USE php_course;
 
 CREATE TABLE IF NOT EXISTS `user`
 (
-    `user_id`     INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id`     INT UNSIGNED NULL AUTO_INCREMENT,
     `first_name`  VARCHAR(255) NOT NULL,
     `last_name`   VARCHAR(255) NOT NULL,
     `middle_name` VARCHAR(255) DEFAULT NULL,

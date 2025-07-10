@@ -1,23 +1,23 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Model\Entity;
+namespace App\Entity;
+
+use DateTimeImmutable;
 
 class User
 {
-
     public function __construct(
-        private ?int    $id,
-        private string  $firstName,
-        private string  $lastName,
+        private ?int $id = null,
+        private string $firstName,
+        private string $lastName,
         private ?string $middleName,
-        private ?string $gender,
-        private ?string $birthDate,
-        private string  $email,
+        private string $gender,
+        private DateTimeImmutable $birthDate,
+        private string $email,
         private ?string $phone,
         private ?string $avatarPath
-    )
-    {
+    ) {
     }
 
     public function getId(): ?int
@@ -34,8 +34,6 @@ class User
     {
         return $this->firstName;
     }
-
-    // ... остальные геттеры
 
     public function setFirstName(string $firstName): void
     {
@@ -72,12 +70,12 @@ class User
         $this->gender = $gender;
     }
 
-    public function getBirthDate(): string
+    public function getBirthDate(): DateTimeImmutable
     {
         return $this->birthDate;
     }
 
-    public function setBirthDate(string $birthDate): void
+    public function setBirthDate(DateTimeImmutable $birthDate): void
     {
         $this->birthDate = $birthDate;
     }
@@ -119,7 +117,7 @@ class User
             'last_name' => $this->lastName,
             'middle_name' => $this->middleName,
             'gender' => $this->gender,
-            'birth_date' => $this->birthDate,
+            'birth_date' => $this->birthDate->format('Y-m-d H:i:s'),
             'email' => $this->email,
             'phone' => $this->phone,
             'avatar_path' => $this->avatarPath,

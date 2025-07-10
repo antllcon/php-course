@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
-use App\Model\Entity\User;
-use App\Model\UserTable;
+use App\Entity\User;
+use App\Repository\UserRepository;
 use DateTime;
+use DateTimeImmutable;
+use Doctrine\ORM\Repository\Exception\InvalidFindByCall;
 use Exception;
 use InvalidArgumentException;
 use RuntimeException;
@@ -41,7 +43,7 @@ class UserController extends AbstractController
 
 
     public function __construct(
-        private readonly UserTable $userTable
+        private readonly UserRepository $userTable
     )
     {
     }
@@ -96,7 +98,7 @@ class UserController extends AbstractController
     public function showUser(int $id): Response
     {
         try {
-            $user = $this->getUserOrFail($id);
+            $user = $this->findUser($id);
             return $this->render('user/show_user.html.twig', [
                 'user' => $user,
             ]);
@@ -111,7 +113,7 @@ class UserController extends AbstractController
     public function editUser(int $id, Request $request): Response
     {
         try {
-            $user = $this->getUserOrFail($id);
+            $user = $this->findUser($id);
 
             if ($request->isMethod('GET')) {
                 return $this->render('user/edit_user.html.twig', [
@@ -145,7 +147,7 @@ class UserController extends AbstractController
     public function deleteUser(int $id): Response
     {
         try {
-            $user = $this->getUserOrFail($id);
+            $user = $this->findUser($id);
             $this->userTable->delete($id);
             $this->deleteAvatarFile($user->getAvatarPath());
 
@@ -158,7 +160,7 @@ class UserController extends AbstractController
         }
     }
 
-    private function getUserOrFail(int $userId): User
+    private function findUser(int $userId): User
     {
         $user = $this->userTable->read($userId);
 
@@ -269,11 +271,19 @@ class UserController extends AbstractController
 
             $setter = 'set' . str_replace('_', '', ucwords($field, '_'));
             if (!method_exists($user, $setter)) {
-                throw new RuntimeException("Setter method $setter does not exist in User entity.");
+                continue;
             }
 
             if ($field === 'avatar_path' || $field === 'remove_avatar') {
                 continue;
+            }
+
+            if ($field === 'birth_date') {
+                $value = self::formatBirthDate($value);
+            }
+
+            if ($field === 'phone' && empty($value)) {
+                $value = null;
             }
 
             $user->{$setter}($value);
@@ -305,14 +315,25 @@ class UserController extends AbstractController
         ];
     }
 
-    private static function formatBirthDate(mixed $birthDate): string
+    private static function formatBirthDate(mixed $birthDate): DateTimeImmutable
     {
+        if ($birthDate instanceof DateTimeImmutable) {
+            return $birthDate;
+        }
+
         if ($birthDate instanceof DateTime) {
-            return $birthDate->format('Y-m-d');
+            return DateTimeImmutable::createFromMutable($birthDate);
         }
 
         try {
-            return (new DateTime((string)$birthDate))->format('Y-m-d');
+            $date = DateTimeImmutable::createFromFormat('Y-m-d', (string)$birthDate);
+
+            if ($date === false) {
+                throw new InvalidArgumentException('Invalid date format');
+            }
+
+            return $date->setTime(0, 0, 0);
+
         } catch (Exception $e) {
             throw new InvalidArgumentException('Invalid birth date: ' . $e->getMessage());
         }
