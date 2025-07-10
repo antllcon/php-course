@@ -13,14 +13,6 @@ use PDO;
 use PDOException;
 use RuntimeException;
 
-/**
- * @extends ServiceEntityRepository<User>
- *
- * @method User|null find($id, $lockMode = null, $lockVersion = null)
- * @method User|null findOneBy(array $criteria, array $orderBy = null)
- * @method User[]    findAll()
- * @method User[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
- */
 class UserRepository extends ServiceEntityRepository
 {
     private EntityManagerInterface $entityManager;
@@ -34,24 +26,16 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @throws Exception
      */
-    public function create(User $user): int
+    public function store(User $user): int
     {
         $this->entityManager->persist($user);
         $this->entityManager->flush();
         return $user->getId();
     }
 
-    public function read(int $userId): ?User
+    public function findById(int $userId): ?User
     {
         return $this->find($userId);
-    }
-
-    /**
-     * @throws Exception
-     */
-    public function update(User $user): void
-    {
-        $this->entityManager->flush();
     }
 
     public function delete(int $userId): void
@@ -66,7 +50,7 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @return User[]
      */
-    public function getAllUsers(): array
+    public function listAll(): array
     {
         return $this->findBy([], ['lastName' => 'ASC', 'firstName' => 'ASC']);
     }

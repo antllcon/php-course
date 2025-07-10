@@ -56,7 +56,7 @@ class UserController extends AbstractController
     public function listUsers(): Response
     {
         try {
-            $users = $this->userTable->getAllUsers();
+            $users = $this->userTable->listAll();
             return $this->render('user/list_users.html.twig', [
                 'users' => $users,
             ]);
@@ -75,17 +75,18 @@ class UserController extends AbstractController
     {
         try {
             $avatarFile = $_FILES['avatar'] ?? null;
-            $avatarPath = $this->processUploadedAvatar($avatarFile);
-            $userData = $this->getUserInput($_POST, $avatarPath);
+            $avatarPath = self::processUploadedAvatar($avatarFile);
+            $userData = self::getUserInput($_POST, $avatarPath);
             self::validateRequiredFields($userData);
             $normalizedData = self::normalizeUserData($userData);
-            $user = $this->createUserEntity($normalizedData);
-            $userId = $this->userTable->create($user);
-            return $this->redirectToRoute('user_show', ['id' => $userId]);
+            self::validateUniqueUserFields($normalizedData['email'], $normalizedData['phone']);
+            $user = self::createUserEntity($normalizedData);
+            $userId = $this->userTable->store($user);
+            return self::redirectToRoute('user_show', ['id' => $userId]);
 
         } catch (RuntimeException|InvalidArgumentException $exception) {
             $error = $exception->getMessage();
-            return $this->render('user/register_form.html.twig', [
+            return self::render('user/register_form.html.twig', [
                 'error' => $error,
                 'old_input' => $_POST,
             ], new Response('', Response::HTTP_BAD_REQUEST));
@@ -98,12 +99,12 @@ class UserController extends AbstractController
     public function showUser(int $id): Response
     {
         try {
-            $user = $this->findUser($id);
-            return $this->render('user/show_user.html.twig', [
+            $user = self::findUser($id);
+            return self::render('user/show_user.html.twig', [
                 'user' => $user,
             ]);
         } catch (InvalidArgumentException $e) {
-            throw $this->createNotFoundException($e->getMessage());
+            throw self::createNotFoundException($e->getMessage());
         } catch (Exception $e) {
             error_log("Error in showUser for ID $id: " . $e->getMessage());
             return new Response('Server error: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
@@ -113,23 +114,24 @@ class UserController extends AbstractController
     public function editUser(int $id, Request $request): Response
     {
         try {
-            $user = $this->findUser($id);
+            $user = self::findUser($id);
 
             if ($request->isMethod('GET')) {
-                return $this->render('user/edit_user.html.twig', [
+                return self::render('user/edit_user.html.twig', [
                     'user' => $user,
                     'error' => null,
                 ]);
 
             } elseif ($request->isMethod('POST')) {
-                $this->handleAvatarLogic($user, $_POST, $_FILES);
+                self::handleAvatarLogic($user, $_POST, $_FILES);
                 unset($_POST['avatar'], $_POST['remove_avatar']);
 
-                $this->updateAllowedFields($user, $_POST);
+                self::updateAllowedFields($user, $_POST);
                 self::validateRequiredFields($_POST);
-                $this->userTable->update($user);
+                self::validateUniqueUserFields($user->getEmail(), $user->getPhone(), $user->getId());
+                $userId = $this->userTable->store($user);
 
-                return $this->redirectToRoute('user_show', ['id' => $user->getId()]);
+                return $this->redirectToRoute('user_show', ['id' => $userId]);
             }
         } catch (InvalidArgumentException $e) {
             $error = $e->getMessage();
@@ -162,13 +164,29 @@ class UserController extends AbstractController
 
     private function findUser(int $userId): User
     {
-        $user = $this->userTable->read($userId);
+        $user = $this->userTable->findById($userId);
 
         if ($user === null) {
             throw new InvalidArgumentException("User with ID $userId not found.");
         }
 
         return $user;
+    }
+
+    private function validateUniqueUserFields(string $email, ?string $phone, ?int $currentUserId = null): void
+    {
+        $existingUserByEmail = $this->userTable->findByEmail($email);
+        if ($existingUserByEmail !== null && $existingUserByEmail->getId() !== $currentUserId) {
+            throw new InvalidArgumentException("User with email $email already exists");
+        }
+
+        if (!empty($phone)) {
+            $normalizedPhone = self::normalizePhone($phone);
+            $existingUserByPhone = $this->userTable->findByPhone($normalizedPhone);
+            if ($existingUserByPhone !== null && $existingUserByPhone->getId() !== $currentUserId) {
+                throw new InvalidArgumentException("User with phone $phone already exists");
+            }
+        }
     }
 
     private function handleAvatarLogic(User $user, array $postData, array $filesData): void
@@ -226,7 +244,7 @@ class UserController extends AbstractController
         }
 
         // Строим полный путь к файлу
-        $fullPath = self::AVATAR_UPLOAD_DIR . basename($avatarPath); // basename для безопасности
+        $fullPath = self::AVATAR_UPLOAD_DIR . basename($avatarPath);
 
         if (file_exists($fullPath) && is_file($fullPath)) {
             unlink($fullPath);
