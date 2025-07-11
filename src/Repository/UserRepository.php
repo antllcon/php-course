@@ -8,10 +8,6 @@ use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
-use InvalidArgumentException;
-use PDO;
-use PDOException;
-use RuntimeException;
 
 class UserRepository extends ServiceEntityRepository
 {
