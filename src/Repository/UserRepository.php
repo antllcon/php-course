@@ -26,11 +26,10 @@ class UserRepository extends ServiceEntityRepository
     /**
      * @throws Exception
      */
-    public function store(User $user): int
+    public function store(User $user): void
     {
         $this->entityManager->persist($user);
         $this->entityManager->flush();
-        return $user->getId();
     }
 
     public function findById(int $userId): ?User

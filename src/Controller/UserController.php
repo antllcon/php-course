@@ -12,8 +12,10 @@ use Exception;
 use InvalidArgumentException;
 use RuntimeException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class UserController extends AbstractController
 {
@@ -49,19 +51,25 @@ class UserController extends AbstractController
 
     public function root(): Response
     {
-        return $this->redirectToRoute('user_list');
+        return $this->redirectToRoute(route: 'user_list');
     }
 
     public function listUsers(): Response
     {
         try {
             $users = $this->userTable->listAll();
-            return $this->render('user/list_users.html.twig', [
-                'users' => $users,
-            ]);
+
+            return $this->render('user/list_users.html.twig',
+                ['users' => $users]
+            );
+
         } catch (Exception $e) {
-            error_log("Error in listUsers: " . $e->getMessage());
-            return new Response('Server error: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
+            error_log(message: "Error in list users: " . $e->getMessage());
+
+            return new Response(
+                'Server error: ' . $e->getMessage(),
+                Response::HTTP_INTERNAL_SERVER_ERROR
+            );
         }
     }
 
@@ -70,81 +78,127 @@ class UserController extends AbstractController
         return $this->render('user/register_form.html.twig');
     }
 
+    /**
+     * @param Request $request
+     * @return Response
+     * @throws RuntimeException|InvalidArgumentException Если входные данные невалидны или загрузка файла не удалась.
+     * @throws Exception Если произошла ошибка сервера во время регистрации.
+     */
     public function registerUser(Request $request): Response
     {
         try {
-            $avatarFile = $_FILES['avatar'] ?? null;
-            $avatarPath = self::processUploadedAvatar($avatarFile);
-            $userData = self::getUserInput($_POST, $avatarPath);
-            self::validateRequiredFields($userData);
-            $normalizedData = self::normalizeUserData($userData);
-            self::validateUniqueUserFields($normalizedData['email'], $normalizedData['phone']);
-            $user = self::createUserEntity($normalizedData);
-            $userId = $this->userTable->store($user);
-            return self::redirectToRoute('user_show', ['id' => $userId]);
+            // Получение данных
+            /** @var UploadedFile|null $avatarFile */
+            $avatarFile = $request->files->get('avatar');
+            $avatarPath = $this->processUploadedAvatar($avatarFile);
+            $postData = $request->request->all();
+            $userData = $this->getUserInput($postData, $avatarPath);
 
-        } catch (RuntimeException|InvalidArgumentException $exception) {
-            $error = $exception->getMessage();
+            // Валидация данных
+            $this->validateRequiredFields($userData);
+            $normalizedData = $this->normalizeUserData($userData);
+            $this->validateUniqueUserFields($normalizedData['email'], $normalizedData['phone']);
+
+            // Создание и сохранение пользователя
+            $user = $this->createUserEntity($normalizedData);
+            $this->userTable->store($user);
+
+            return $this->redirectToRoute('user_show',
+                ['id' => $user->getId()]
+            );
+
+        } catch (RuntimeException|InvalidArgumentException $e) {
             return self::render('user/register_form.html.twig', [
-                'error' => $error,
-                'old_input' => $_POST,
+                'error' => $e->getMessage(),
+                'old_input' => $request->request->all(),
             ], new Response('', Response::HTTP_BAD_REQUEST));
+
         } catch (Exception $e) {
-            error_log("Error in registerUser: " . $e->getMessage());
+            error_log("Error in register user: " . $e->getMessage());
             return new Response('Server error during registration: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
+    /**
+     * @param int $id
+     * @return Response
+     * @throws NotFoundHttpException Если пользователь не найден.
+     * @throws Exception Если произошла ошибка сервера.
+     */
     public function showUser(int $id): Response
     {
         try {
-            $user = self::findUser($id);
-            return self::render('user/show_user.html.twig', [
+            $user = $this->findUser($id);
+            return $this->render('user/show_user.html.twig', [
                 'user' => $user,
             ]);
+
         } catch (InvalidArgumentException $e) {
-            throw self::createNotFoundException($e->getMessage());
+            throw $this->createNotFoundException($e->getMessage());
+
         } catch (Exception $e) {
-            error_log("Error in showUser for ID $id: " . $e->getMessage());
+            error_log("Error in show user for ID $id: " . $e->getMessage());
             return new Response('Server error: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
+    /**
+     * @param int $id
+     * @param Request $request
+     * @return Response
+     * @throws NotFoundHttpException Если пользователь не найден.
+     * @throws InvalidArgumentException Если входные данные невалидны.
+     * @throws RuntimeException Если загрузка/удаление файла не удались.
+     * @throws Exception Если произошла ошибка сервера.
+     */
     public function editUser(int $id, Request $request): Response
     {
         try {
-            $user = self::findUser($id);
+            $user = $this->findUser($id);
 
             if ($request->isMethod('GET')) {
-                return self::render('user/edit_user.html.twig', [
+                return $this->render('user/edit_user.html.twig', [
                     'user' => $user,
                     'error' => null,
                 ]);
 
             } elseif ($request->isMethod('POST')) {
-                self::handleAvatarLogic($user, $_POST, $_FILES);
-                unset($_POST['avatar'], $_POST['remove_avatar']);
+                // Загрузка аватарки
+                $postData = $request->request->all();
+                /** @var UploadedFile|null $avatarFile */
+                $avatarFile = $request->files->get('avatar');
+                $this->handleAvatarLogic($user, $postData, $avatarFile);
 
-                self::updateAllowedFields($user, $_POST);
-                self::validateRequiredFields($_POST);
+                // Обновление и валидация
+                self::updateAllowedFields($user, $postData);
+                self::validateRequiredFields($postData);
                 self::validateUniqueUserFields($user->getEmail(), $user->getPhone(), $user->getId());
-                $userId = $this->userTable->store($user);
+                $this->userTable->store($user);
 
-                return $this->redirectToRoute('user_show', ['id' => $userId]);
+                return $this->redirectToRoute('user_show', ['id' => $user->getId()]);
             }
+
         } catch (InvalidArgumentException $e) {
             $error = $e->getMessage();
             return $this->render('user/edit_user.html.twig', [
                 'user' => $user,
                 'error' => $error,
             ], new Response('', Response::HTTP_BAD_REQUEST));
+
         } catch (Exception $e) {
-            error_log("Error in editUser for ID {$id}: " . $e->getMessage());
+            error_log("Error in editUser for ID $id: " . $e->getMessage());
             return new Response('Server error during user edit: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
+
         return new Response('Invalid request method', Response::HTTP_METHOD_NOT_ALLOWED);
     }
 
+    /**
+     * @param int $id
+     * @return Response
+     * @throws NotFoundHttpException Если пользователь не найден.
+     * @throws Exception Если произошла ошибка сервера.
+     */
     public function deleteUser(int $id): Response
     {
         try {
@@ -153,42 +207,68 @@ class UserController extends AbstractController
             $this->deleteAvatarFile($user->getAvatarPath());
 
             return $this->redirectToRoute('user_list');
+
         } catch (InvalidArgumentException $e) {
             throw $this->createNotFoundException($e->getMessage());
+
         } catch (Exception $e) {
             error_log("Error in deleteUser for ID $id: " . $e->getMessage());
             return new Response('Server error during user deletion: ' . $e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 
+    /**
+     * Находит пользователя по ID или выбрасывает исключение.
+     *
+     * @param int $userId
+     * @return User
+     * @throws InvalidArgumentException Если пользователь не найден.
+     */
     private function findUser(int $userId): User
     {
         $user = $this->userTable->findById($userId);
 
-        if ($user === null) {
-            throw new InvalidArgumentException("User with ID $userId not found.");
+        if (is_null($user)) {
+            throw new InvalidArgumentException("User with ID $userId not found");
         }
 
         return $user;
     }
 
+    /**
+     * Проверяет уникальность email и phone.
+     *
+     * @param string $email
+     * @param string|null $phone
+     * @param int|null $currentUserId ID пользователя, которого мы обновляем (для исключения его из проверки).
+     * @return void
+     * @throws InvalidArgumentException Если email или phone уже заняты.
+     */
     private function validateUniqueUserFields(string $email, ?string $phone, ?int $currentUserId = null): void
     {
         $existingUserByEmail = $this->userTable->findByEmail($email);
-        if ($existingUserByEmail !== null && $existingUserByEmail->getId() !== $currentUserId) {
+        if (!is_null($existingUserByEmail) && $existingUserByEmail->getId() !== $currentUserId) {
             throw new InvalidArgumentException("User with email $email already exists");
         }
 
         if (!empty($phone)) {
-            $normalizedPhone = self::normalizePhone($phone);
+            $normalizedPhone = $this->normalizePhone($phone);
             $existingUserByPhone = $this->userTable->findByPhone($normalizedPhone);
-            if ($existingUserByPhone !== null && $existingUserByPhone->getId() !== $currentUserId) {
+            if (!is_null($existingUserByPhone) && $existingUserByPhone->getId() !== $currentUserId) {
                 throw new InvalidArgumentException("User with phone $phone already exists");
             }
         }
     }
 
-    private function handleAvatarLogic(User $user, array $postData, array $filesData): void
+    /**
+     * Обрабатывает логику загрузки/удаления аватара при редактировании.
+     *
+     * @param User $user
+     * @param array $postData Данные из POST-запроса (например, 'remove_avatar').
+     * @param UploadedFile|null $avatarFile Загруженный файл аватара.
+     * @return void
+     */
+    private function handleAvatarLogic(User $user, array $postData, ?UploadedFile $avatarFile): void
     {
         $isAvatarRemovalRequested = !empty($postData['remove_avatar']) && $postData['remove_avatar'] === '1';
 
@@ -198,51 +278,62 @@ class UserController extends AbstractController
             return;
         }
 
-        $uploadedFile = $filesData['avatar'] ?? null;
-        if ($uploadedFile && $uploadedFile['error'] === UPLOAD_ERR_OK) {
-            $newAvatarPath = $this->processUploadedAvatar($uploadedFile);
+        if ($avatarFile instanceof UploadedFile && $avatarFile->isValid()) {
+            $newAvatarPath = $this->processUploadedAvatar($avatarFile);
             $this->deleteAvatarFile($user->getAvatarPath());
             $user->setAvatarPath($newAvatarPath);
         }
     }
 
-    private function processUploadedAvatar(?array $file): ?string
+    /**
+     * Обрабатывает загруженный файл аватара, перемещает его и возвращает публичный путь.
+     *
+     * @param UploadedFile|null $file
+     * @return string|null Путь к сохраненному аватару или null, если файл не был загружен.
+     * @throws InvalidArgumentException Если файл слишком большой, некорректного типа.
+     * @throws RuntimeException Если файл невалиден или не удалось переместить файл.
+     */
+    private function processUploadedAvatar(?UploadedFile $file): ?string
     {
-        if (!$file || $file['error'] === UPLOAD_ERR_NO_FILE) {
+        if (!$file) {
             return null;
         }
 
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new RuntimeException('An error occurred during file upload.');
+        if (!$file->isValid()) {
+            throw new RuntimeException('An error occurred during file upload: ' . $file->getErrorMessage());
         }
 
-        if ($file['size'] > self::AVATAR_MAX_SIZE) {
-            throw new InvalidArgumentException('File is too large. Maximum size is ' . (self::AVATAR_MAX_SIZE / (1024 * 1024)) . 'MB.');
+        if ($file->getSize() > self::AVATAR_MAX_SIZE) {
+            throw new InvalidArgumentException('File is too large. Maximum size is ' . (self::AVATAR_MAX_SIZE / (1024 * 1024)) . 'MB');
         }
 
-        $mimeType = mime_content_type($file['tmp_name']);
-        if (!in_array($mimeType, self::AVATAR_ALLOWED_MIME_TYPES, true)) {
-            throw new InvalidArgumentException('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+        if (!in_array($file->getMimeType(), self::AVATAR_ALLOWED_MIME_TYPES, true)) {
+            throw new InvalidArgumentException('Invalid file type. Only JPG, PNG, and GIF are allowed');
         }
 
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = uniqid('avatar_', true) . '.' . $extension;
-        $destination = self::AVATAR_UPLOAD_DIR . $filename;
+        $filename = uniqid('avatar_', true) . '.' . $file->guessExtension();
 
-        if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            throw new RuntimeException('Failed to save the uploaded file.');
+        try {
+            $file->move(self::AVATAR_UPLOAD_DIR, $filename);
+        } catch (Exception $e) {
+            throw new RuntimeException('Failed to save the uploaded file: ' . $e->getMessage());
         }
 
         return '/uploads/' . $filename;
     }
 
+    /**
+     * Удаляет файл аватара с сервера.
+     *
+     * @param string|null $avatarPath Путь к аватару в базе данных.
+     * @return void
+     */
     private function deleteAvatarFile(?string $avatarPath): void
     {
         if (!$avatarPath) {
             return;
         }
 
-        // Строим полный путь к файлу
         $fullPath = self::AVATAR_UPLOAD_DIR . basename($avatarPath);
 
         if (file_exists($fullPath) && is_file($fullPath)) {
@@ -250,6 +341,13 @@ class UserController extends AbstractController
         }
     }
 
+    /**
+     * Извлекает и форматирует необходимые входные данные пользователя из POST-данных и пути аватара.
+     *
+     * @param array $postData Сырые POST-данные.
+     * @param string|null $avatarPath Путь к загруженному аватару.
+     * @return array
+     */
     private function getUserInput(array $postData, ?string $avatarPath): array
     {
         return [
@@ -264,6 +362,12 @@ class UserController extends AbstractController
         ];
     }
 
+    /**
+     * Создает новую сущность User на основе нормализованных данных.
+     *
+     * @param array $normalizedData Нормализованные данные пользователя.
+     * @return User
+     */
     private function createUserEntity(array $normalizedData): User
     {
         return new User(
@@ -279,6 +383,14 @@ class UserController extends AbstractController
         );
     }
 
+    /**
+     * Обновляет разрешенные поля сущности User из массива данных.
+     *
+     * @param User $user Сущность пользователя для обновления.
+     * @param array $data Массив данных для обновления.
+     * @return void
+     * @throws InvalidArgumentException Если поле не разрешено для обновления.
+     */
     private function updateAllowedFields(User $user, array $data): void
     {
         foreach ($data as $field => $value) {
@@ -296,7 +408,7 @@ class UserController extends AbstractController
             }
 
             if ($field === 'birth_date') {
-                $value = self::formatBirthDate($value);
+                $value = $this->formatBirthDate($value);
             }
 
             if ($field === 'phone' && empty($value)) {
@@ -307,6 +419,13 @@ class UserController extends AbstractController
         }
     }
 
+    /**
+     * Проверяет наличие обязательных полей во входных данных.
+     *
+     * @param array $userParams Входные параметры пользователя.
+     * @return void
+     * @throws InvalidArgumentException Если отсутствуют обязательные поля.
+     */
     private static function validateRequiredFields(array $userParams): void
     {
         $missingFields = array_filter(self::USER_REQUIRED_FIELDS, fn($field) => empty($userParams[$field]));
@@ -318,7 +437,13 @@ class UserController extends AbstractController
         }
     }
 
-    private static function normalizeUserData(array $userData): array
+    /**
+     * Нормализует входные данные пользователя (удаляет пробелы, форматирует дату, нормализует телефон).
+     *
+     * @param array $userData
+     * @return array
+     */
+    private function normalizeUserData(array $userData): array
     {
         return [
             'first_name' => trim($userData['first_name']),
@@ -332,7 +457,14 @@ class UserController extends AbstractController
         ];
     }
 
-    private static function formatBirthDate(mixed $birthDate): DateTimeImmutable
+    /**
+     * Преобразует дату рождения в объект DateTimeImmutable.
+     *
+     * @param mixed $birthDate Дата рождения в виде строки, DateTime или DateTimeImmutable.
+     * @return DateTimeImmutable
+     * @throws InvalidArgumentException Если формат даты невалиден.
+     */
+    private function formatBirthDate(mixed $birthDate): DateTimeImmutable
     {
         if ($birthDate instanceof DateTimeImmutable) {
             return $birthDate;
@@ -345,18 +477,24 @@ class UserController extends AbstractController
         try {
             $date = DateTimeImmutable::createFromFormat('Y-m-d', (string)$birthDate);
 
-            if ($date === false) {
+            if (!$date) {
                 throw new InvalidArgumentException('Invalid date format');
             }
 
-            return $date->setTime(0, 0, 0);
+            return $date->setTime(0, 0);
 
         } catch (Exception $e) {
             throw new InvalidArgumentException('Invalid birth date: ' . $e->getMessage());
         }
     }
 
-    private static function normalizePhone(string $phone): string
+    /**
+     * Нормализует номер телефона, удаляя все символы, кроме цифр и '+'.
+     *
+     * @param string $phone
+     * @return string
+     */
+    private function normalizePhone(string $phone): string
     {
         return preg_replace('/[^0-9+]/', '', $phone);
     }
