@@ -14,7 +14,7 @@ final class Version20250710073850 extends AbstractMigration
 {
     public function getDescription(): string
     {
-        return '';
+        return 'Создал первую миграцию для переноса работы базы данных на Doctrine';
     }
 
     public function up(Schema $schema): void
