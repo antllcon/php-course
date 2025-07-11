@@ -1,8 +1,5 @@
-/* show_user.css */
-
 @import url('common.css');
 
-/* Стили для контейнера с данными пользователя */
 .user-profile-container {
     background-color: #ffffff;
     border-radius: 10px;
@@ -10,6 +7,9 @@
     width: 100%;
     max-width: 500px;
     box-shadow: 0 0 15px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .user-profile-container h2 {
@@ -17,7 +17,6 @@
     font-size: 24px;
 }
 
-/* Стили для списка с данными */
 .user-details {
     list-style: none;
     width: 100%;
@@ -34,7 +33,6 @@
     border-bottom: none;
 }
 
-/* Стили для меток и значений */
 .user-details li span:first-child {
     font-weight: 600;
     color: #34495e;
@@ -48,23 +46,67 @@
     padding-left: 15px;
 }
 
-/* Стили для контейнера с кнопками */
-.user-profile-container {
-    /* Остальные стили... */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+.user-details li span:last-child:empty::before {
+    content: "Не указано";
+    color: #95a5a6;
+    font-style: italic;
 }
 
-/* Контейнер для кнопок (можно обернуть их в div в HTML) */
+/* Стили для кнопок */
 .button-group {
     display: flex;
-    gap: 15px; /* Отступ между кнопками */
+    gap: 15px;
     margin-top: 20px;
 }
 
-/* Опционально: сделать кнопки одинаковой ширины */
 .button-group button {
     flex: 1;
     min-width: 120px;
+}
+
+.avatar-container {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+.user-avatar,
+img[alt="User Avatar"] {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 3px solid #f0f0f0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin: 0 auto 25px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.user-avatar:hover,
+img[alt="User Avatar"]:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.default-avatar {
+    filter: grayscale(30%);
+    opacity: 0.9;
+}
+
+@media (max-width: 768px) {
+    .user-avatar,
+    img[alt="User Avatar"] {
+        width: 120px;
+        height: 120px;
+        margin-bottom: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .user-avatar,
+    img[alt="User Avatar"] {
+        width: 100px;
+        height: 100px;
+        margin-bottom: 15px;
+    }
 }

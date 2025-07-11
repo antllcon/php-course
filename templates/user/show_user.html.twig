@@ -7,20 +7,40 @@
 {% endblock %}
 
 {% block body %}
-    {% if user.avatarPath is not null %}
-        <img src="{{ asset(user.avatarPath) }}" alt="Avatar" style="width: 150px;">
-    {% endif %}
+    <div class="avatar-container">
+        <img
+            src="{{ user.avatarPath ? asset(user.avatarPath) : asset('assets/images/default_avatar.jpg') }}?v={{ 'now'|date('U') }}"
+            alt="Аватар пользователя"
+            class="user-avatar {% if not user.avatarPath %}default-avatar{% endif %}"
+        >
+    </div>
 
     <div class="user-profile-container">
         <h2>Профиль пользователя</h2>
         <ul class="user-details">
             <li><span>Фамилия:</span> <span>{{ user.lastName }}</span></li>
             <li><span>Имя:</span> <span>{{ user.firstName }}</span></li>
-            <li><span>Отчество:</span> <span>{{ user.middleName }}</span></li>
-            <li><span>Пол:</span> <span>{{ user.gender }}</span></li>
-            <li><span>Дата рождения:</span> <span>{{ user.birthDate|date('Y-m-d') }}</span></li>
+            {% if user.middleName is not empty %}
+                <li><span>Отчество:</span> <span>{{ user.middleName }}</span></li>
+            {% endif %}
+            <li><span>Пол:</span> <span>
+                {% if user.gender == 'male' %}
+                    Мужской
+                {% elseif user.gender == 'female' %}
+                    Женский
+                {% endif %}
+            </span></li>
+            <li><span>Дата рождения:</span> <span>
+                {% if user.birthDate %}
+                    {{ user.birthDate|date('d.m.Y') }}
+                {% else %}
+                    Не указана
+                {% endif %}
+            </span></li>
             <li><span>Email:</span> <span>{{ user.email }}</span></li>
-            <li><span>Телефон:</span> <span>{{ user.phone }}</span></li>
+            {% if user.phone is not empty %}
+                <li><span>Телефон:</span> <span>{{ user.phone }}</span></li>
+            {% endif %}
         </ul>
         <div class="button-group">
             <button onclick="window.location.href='{{ path('user_register') }}'">Создать</button>
