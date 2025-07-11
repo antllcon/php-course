@@ -8,7 +8,6 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use DateTime;
 use DateTimeImmutable;
-use Doctrine\ORM\Repository\Exception\InvalidFindByCall;
 use Exception;
 use InvalidArgumentException;
 use RuntimeException;

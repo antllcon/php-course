@@ -29,20 +29,20 @@ services:
     # please note that last definitions always *replace* previous ones
 
     # Определение сервиса PDO
-    PDO:
-        class: PDO
-        arguments:
-            # Опредление DSN
-            - "mysql:host=%env(DATABASE_HOST)%;dbname=%env(DATABASE_NAME)%;charset=utf8mb4"
-            - "%env(DATABASE_USER)%"
-            - "%env(DATABASE_PASSWORD)%"
-
-            # Аргументы (свойства подключения)
-        calls:
-            - [ "setAttribute", [ !php/const PDO::ATTR_ERRMODE, !php/const PDO::ERRMODE_EXCEPTION ] ]
-            - [ "setAttribute", [ !php/const PDO::ATTR_DEFAULT_FETCH_MODE, !php/const PDO::FETCH_ASSOC ] ]
-
-    App\User\Model\UserTable:
+    #    PDO:
+    #        class: PDO
+    #        arguments:
+    #            # Опредление DSN
+    #            - "mysql:host=%env(DATABASE_HOST)%;dbname=%env(DATABASE_NAME)%;charset=utf8mb4"
+    #            - "%env(DATABASE_USER)%"
+    #            - "%env(DATABASE_PASSWORD)%"
+    #
+    #            # Аргументы (свойства подключения)
+    #        calls:
+    #            - [ "setAttribute", [ !php/const PDO::ATTR_ERRMODE, !php/const PDO::ERRMODE_EXCEPTION ] ]
+    #            - [ "setAttribute", [ !php/const PDO::ATTR_DEFAULT_FETCH_MODE, !php/const PDO::FETCH_ASSOC ] ]
+    #
+    #    App\User\Model\UserTable:
     # autowire: true
     #    arguments:
     #        - '@PDO'
