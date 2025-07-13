@@ -5,8 +5,9 @@ namespace App\Entity;
 
 use DateTimeImmutable;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 
-class User
+class User implements PasswordAuthenticatedUserInterface
 {
     public function __construct(
         private ?int              $id = null,
@@ -22,9 +23,7 @@ class User
         private array             $roles
     )
     {
-        if (empty($this->roles)) {
-            $this->roles[] = [UserRole::USER];
-        }
+        $this->roles = empty($roles) ? [UserRole::USER] : $roles;
     }
 
     public function getId(): ?int
@@ -140,7 +139,7 @@ class User
             }
         }
 
-        $this->roles = $roles;
+        $this->roles = array_unique(array_merge($roles, [UserRole::USER]));
     }
 
 

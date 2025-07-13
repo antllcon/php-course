@@ -33,10 +33,7 @@ class SecurityUser implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->user->getRoles();
-        $roles[] = [UserRole::USER];
-
-        return array_unique($roles);
+        return $this->user->getRoles();
     }
 
     public function getPassword(): string

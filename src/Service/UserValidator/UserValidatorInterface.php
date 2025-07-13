@@ -27,7 +27,9 @@ interface UserValidatorInterface
     public function updateAllowedFields(User $user, array $data): void;
 
     /**
-     * @return bool
+     * @param string $password
+     * @param string $confirmPassword
+     * @return void
      */
-    public function isValidPassword(string $password, string $confirmPassword): bool;
+    public function validatePassword(string $password, string $confirmPassword): void;
 }

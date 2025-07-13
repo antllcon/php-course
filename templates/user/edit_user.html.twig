@@ -100,7 +100,7 @@
             {% if is_granted('ROLE_ADMIN') %}
                 <div class="form-group">
                     <label>Роли</label>
-                    {% for role in constant('App\\Entity\\UserRole::getAllRoles')() %}
+                    {% for role in all_roles %}
                         <div class="form-check">
                             <input type="checkbox"
                                    id="role_{{ loop.index }}"

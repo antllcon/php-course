@@ -11,7 +11,7 @@ use RuntimeException;
 
 class UserValidator implements UserValidatorInterface
 {
-    private const REQUIRED_FIELDS = [
+    private const REQUIRED_FIELDS_REGISTRATION = [
         'first_name',
         'last_name',
         'gender',
@@ -19,6 +19,13 @@ class UserValidator implements UserValidatorInterface
         'email',
         'password',
         'roles'
+    ];
+    private const REQUIRED_FIELDS_UPDATE = [
+        'first_name',
+        'last_name',
+        'gender',
+        'birth_date',
+        'email'
     ];
     private const ALLOWED_FIELDS = [
         'first_name',
@@ -37,13 +44,22 @@ class UserValidator implements UserValidatorInterface
     {
     }
 
-    public function validateRequiredFields(array $userData): void
+    public function validateRequiredFields(array $userData, string $operationType = 'registration'): void
     {
-        $missingFields = array_filter(self::REQUIRED_FIELDS, fn($field) => empty($userData[$field]));
+        $fieldsToCheck = [];
+        if ($operationType === 'registration') {
+            $fieldsToCheck = self::REQUIRED_FIELDS_REGISTRATION;
+        } elseif ($operationType === 'update') {
+            $fieldsToCheck = self::REQUIRED_FIELDS_UPDATE;
+        } else {
+            throw new InvalidArgumentException('Неизвестный тип операции для валидации.');
+        }
+
+        $missingFields = array_filter($fieldsToCheck, fn($field) => empty($userData[$field]));
 
         if ($missingFields) {
             throw new InvalidArgumentException(
-                'Required fields are not specified: ' . implode(', ', $missingFields)
+                'Отсутствуют обязательные поля: ' . implode(', ', $missingFields)
             );
         }
     }
@@ -68,6 +84,10 @@ class UserValidator implements UserValidatorInterface
     public function updateAllowedFields(User $user, array $data): void
     {
         foreach ($data as $field => $value) {
+            if ($field === 'password' || $field === 'roles' || $field === 'password_confirm') {
+                continue;
+            }
+
             if (!in_array($field, self::ALLOWED_FIELDS, true)) {
                 throw new InvalidArgumentException("Field '$field' is not allowed for update.");
             }
@@ -93,12 +113,14 @@ class UserValidator implements UserValidatorInterface
         }
     }
 
-    public function isValidPassword(string $password, string $confirmPassword): bool
+    public function validatePassword(string $password, string $confirmPassword): void
     {
-        if ($plainPassword !== $passwordConfirm) {
+        if ($password !== $confirmPassword) {
             throw new RuntimeException('Passwords do not match');
         }
 
-        return true;
+        if (empty($password)) {
+            throw new RuntimeException('Password cannot be empty');
+        }
     }
 }

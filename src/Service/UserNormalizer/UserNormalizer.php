@@ -21,6 +21,8 @@ class UserNormalizer implements UserNormalizerInterface
             'email' => strtolower(trim($userData['email'])),
             'phone' => isset($userData['phone']) ? self::normalizePhone($userData['phone']) : '',
             'avatar_path' => $userData['avatar_path'] ?? '',
+            'password' => $userData['password'],
+            'roles' => $userData['roles']
         ];
     }
 

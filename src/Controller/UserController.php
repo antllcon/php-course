@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\UserRole;
 use App\Repository\UserRepository;
+use App\Security\SecurityUser;
 use App\Service\AvatarUploader\AvatarUploaderInterface;
-use App\Service\UserNormalizer\UserNormalizer;
-use App\Service\UserValidator\UserValidator;
+use App\Service\UserNormalizer\UserNormalizerInterface;
+use App\Service\UserValidator\UserValidatorInterface;
 use Exception;
 use InvalidArgumentException;
 use RuntimeException;
@@ -17,14 +19,17 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\PasswordHasher\Hasher\PasswordHasherFactoryInterface;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 class UserController extends AbstractController
 {
     public function __construct(
-        private readonly UserRepository $userRepository,
-        private readonly AvatarUploaderInterface $avatarUploader,
-        private readonly UserNormalizer $userNormalizer,
-        private readonly UserValidator $userValidator,
+        private readonly UserRepository                 $userRepository,
+        private readonly AvatarUploaderInterface        $avatarUploader,
+        private readonly UserNormalizerInterface        $userNormalizer,
+        private readonly UserValidatorInterface         $userValidator,
+        private readonly PasswordHasherFactoryInterface $passwordHasherFactory,
     )
     {
     }
@@ -72,10 +77,22 @@ class UserController extends AbstractController
             $avatarFile = $request->files->get('avatar');
             $avatarPath = $this->avatarUploader->upload($avatarFile);
             $postData = $request->request->all();
+
+            // Проверка правильности ввода пароля
+            $plainPassword = $postData['password'] ?? '';
+            $passwordConfirm = $postData['password_confirm'] ?? '';
+            $this->userValidator->validatePassword($plainPassword, $passwordConfirm);
+
+            $defaultHasher = $this->passwordHasherFactory->getPasswordHasher(User::class);
+            $hashedPassword = $defaultHasher->hash($plainPassword);
+
+            // Добавим пароль и роль в userData перед валидацией и нормализацией
             $userData = $this->getUserInput($postData, $avatarPath);
+            $userData['password'] = $hashedPassword;
+            $userData['roles'] = [UserRole::USER];
 
             // Валидация данных
-            $this->userValidator->validateRequiredFields($userData);
+            $this->userValidator->validateRequiredFields($userData, 'registration');
             $normalizedData = $this->userNormalizer->normalize($userData);
             $this->userValidator->validateUniqueFields($normalizedData['email'], $normalizedData['phone']);
 
@@ -88,7 +105,7 @@ class UserController extends AbstractController
             );
 
         } catch (RuntimeException|InvalidArgumentException $e) {
-            return self::render('user/register_form.html.twig', [
+            return $this->render('user/register_form.html.twig', [
                 'error' => $e->getMessage(),
                 'old_input' => $request->request->all(),
             ], new Response('', Response::HTTP_BAD_REQUEST));
@@ -109,6 +126,7 @@ class UserController extends AbstractController
     {
         try {
             $user = $this->findUser($id);
+
             return $this->render('user/show_user.html.twig', [
                 'user' => $user,
             ]);
@@ -135,11 +153,13 @@ class UserController extends AbstractController
     {
         try {
             $user = $this->findUser($id);
+            $this->validateRole($user);
 
             if ($request->isMethod('GET')) {
                 return $this->render('user/edit_user.html.twig', [
                     'user' => $user,
                     'error' => null,
+                    'all_roles' => UserRole::getAllRoles()
                 ]);
 
             } elseif ($request->isMethod('POST')) {
@@ -149,20 +169,49 @@ class UserController extends AbstractController
                 $avatarFile = $request->files->get('avatar');
                 $this->handleUserAvatarLogic($user, $postData, $avatarFile);
 
+                // Проверка и обновление пароля
+                $plainPassword = $postData['password'] ?? '';
+                $passwordConfirm = $postData['password_confirm'] ?? '';
+
+                if (!empty($plainPassword) || !empty($passwordConfirm)) {
+                    $this->userValidator->validatePassword($plainPassword, $passwordConfirm);
+
+                    $defaultHasher = $this->passwordHasherFactory->getPasswordHasher(User::class);
+                    $hashedPassword = $defaultHasher->hash($plainPassword);
+                    $user->setPassword($hashedPassword);
+                }
+
+                // Обновление ролей
+                if ($this->isGranted(UserRole::ADMIN)) {
+                    $selectedRoles = $request->request->all('roles') ?? [];
+                    if (empty($selectedRoles)) {
+                        $selectedRoles[] = UserRole::USER;
+                    }
+                    $user->setRoles($selectedRoles);
+                }
+
                 // Обновление и валидация
                 $this->userValidator->updateAllowedFields($user, $postData);
-                $this->userValidator->validateRequiredFields($postData);
+                $this->userValidator->validateRequiredFields($postData, 'update');
                 $this->userValidator->validateUniqueFields($user->getEmail(), $user->getPhone(), $user->getId());
+
+                $defaultHasher = $this->passwordHasherFactory->getPasswordHasher(User::class);
+                $hashedPassword = $defaultHasher->hash($plainPassword);
+                $user->setPassword($hashedPassword);
                 $this->userRepository->store($user);
 
                 return $this->redirectToRoute('user_show', ['id' => $user->getId()]);
             }
+
+        } catch (AccessDeniedException $e) {
+            return new Response($e->getMessage(), Response::HTTP_FORBIDDEN);
 
         } catch (InvalidArgumentException $e) {
             $error = $e->getMessage();
             return $this->render('user/edit_user.html.twig', [
                 'user' => $user,
                 'error' => $error,
+                'all_roles' => UserRole::getAllRoles(),
             ], new Response('', Response::HTTP_BAD_REQUEST));
 
         } catch (Exception $e) {
@@ -183,8 +232,19 @@ class UserController extends AbstractController
     {
         try {
             $user = $this->findUser($id);
-            $this->userRepository->delete($id);
+            $this->validateRole($user);
+            $currentUser = $this->getUser();
+
+            if (!$currentUser instanceof SecurityUser) {
+                throw new AccessDeniedException('You must be logged in to perform this action');
+            }
+
             $this->avatarUploader->delete($user->getAvatarPath());
+            $this->userRepository->delete($id);
+
+            if ($currentUser->getUser()->getId() === $user->getId()) {
+                return $this->redirectToRoute('logout');
+            }
 
             return $this->redirectToRoute('user_list');
 
@@ -228,7 +288,7 @@ class UserController extends AbstractController
             'birth_date' => $postData['birth_date'] ?? '',
             'email' => $postData['email'] ?? '',
             'phone' => $postData['phone'] ?? '',
-            'avatar_path' => $avatarPath,
+            'avatar_path' => $avatarPath
         ];
     }
 
@@ -247,7 +307,9 @@ class UserController extends AbstractController
             birthDate: $normalizedData['birth_date'],
             email: $normalizedData['email'],
             phone: $normalizedData['phone'],
-            avatarPath: $normalizedData['avatar_path']
+            avatarPath: $normalizedData['avatar_path'],
+            password: $normalizedData['password'],
+            roles: $normalizedData['roles']
         );
     }
 
@@ -270,6 +332,21 @@ class UserController extends AbstractController
             $newAvatarPath = $this->avatarUploader->upload($avatarFile);
             $this->avatarUploader->delete($user->getAvatarPath());
             $user->setAvatarPath($newAvatarPath);
+        }
+    }
+
+    private function validateRole(User $user): void
+    {
+        $currentUser = $this->getUser();
+
+        if (
+            !$currentUser instanceof SecurityUser ||
+            (
+                !$this->isGranted(UserRole::ADMIN) &&
+                $currentUser->getUser()->getId() !== $user->getId()
+            )
+        ) {
+            throw new AccessDeniedException('This user is not exist :)');
         }
     }
 }
