@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Security;
 
+use LogicException;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -70,17 +71,14 @@ class UserAuthenticator extends AbstractLoginFormAuthenticator
 
     public function onAuthenticationSuccess(Request $request, TokenInterface $token, string $firewallName): ?Response
     {
-        // Пытаемся перенаправить пользователя на URL, который он пытался посетить до логина
-        if ($targetPath = $this->getTargetPath($request->getSession(), $firewallName)) {
-            return new RedirectResponse($targetPath);
+        $user = $token->getUser();
+
+        if (!$user instanceof SecurityUser) {
+            throw new LogicException('The authenticated user is not an instance of SecurityUser');
         }
 
-        // Если нет целевого пути, перенаправляем на главную страницу или профиль пользователя
-        // TODO: проверить
-
-        $user = $token->getUser();
         return new RedirectResponse(
-            $this->urlGenerator->generate('user_show', ['id' => $user->getId()])
+            $this->urlGenerator->generate('user_show', ['id' => $user->getUser()->getId()])
         );
     }
 

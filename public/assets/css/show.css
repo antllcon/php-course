@@ -110,3 +110,40 @@ img[alt="User Avatar"]:hover {
         margin-bottom: 15px;
     }
 }
+
+.avatar-container a {
+    display: inline-block;
+    text-decoration: none;
+}
+
+.admin-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #2e7d32;
+    background-color: transparent;
+}
+
+.admin-check {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 18px;
+    margin-left: 6px;
+    background-color: #4caf50;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.button-group button:first-child {
+    background-color: #f44336;
+}
+
+.button-group button:first-child:hover {
+    background-color: #d32f2f;
+}

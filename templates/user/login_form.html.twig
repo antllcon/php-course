@@ -2,15 +2,19 @@
 
 {% block title %}Вход{% endblock %}
 
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('assets/css/login.css') }}">
+{% endblock %}
+
 {% block body %}
-    <div class="container">
+    <div class="login-container">
         <h1>Вход в систему</h1>
 
         {% if error %}
             <div class="alert alert-danger">{{ error.messageKey|trans(error.messageData, 'security') }}</div>
         {% endif %}
 
-        <form action="{{ path('login') }}" method="post">
+        <form action="{{ path('login') }}" method="post" class="login-form">
             <div class="form-group">
                 <label for="username">Email:</label>
                 <input type="text" id="username" name="email" value="{{ last_username }}" class="form-control" autocomplete="email" required autofocus>
@@ -21,10 +25,13 @@
                 <input type="password" id="password" name="password" class="form-control" autocomplete="current-password" required>
             </div>
 
-            {# TODO: понять #}
             <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
 
             <button type="submit" class="btn btn-primary">Войти</button>
+
+            <div class="register-link">
+                Нет аккаунта? <a href="{{ path('user_register') }}">Создать новый</a>
+            </div>
         </form>
     </div>
 {% endblock %}

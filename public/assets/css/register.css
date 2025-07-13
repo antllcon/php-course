@@ -95,3 +95,55 @@ select:focus {
     max-width: 100%;
     max-height: 100%;
 }
+
+.login-link {
+    text-align: center;
+    margin-top: 15px;
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+.login-link a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+
+.login-link a:hover {
+    color: #2980b9;
+    text-decoration: underline;
+}
+
+.password-strength {
+    margin-top: 5px;
+    font-size: 12px;
+    color: #7f8c8d;
+}
+
+.password-match {
+    margin-top: 5px;
+    font-size: 12px;
+}
+
+.password-match.valid {
+    color: #4caf50;
+}
+
+.password-match.invalid {
+    color: #f44336;
+}
+
+/* Иконка показа пароля */
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: #7f8c8d;
+}
+
+.password-wrapper {
+    position: relative;
+}

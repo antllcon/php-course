@@ -3,20 +3,30 @@
 {% block title %}Профиль пользователя{% endblock %}
 
 {% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('assets/css/show_user.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/show.css') }}">
 {% endblock %}
 
 {% block body %}
     <div class="avatar-container">
-        <img
-            src="{{ user.avatarPath ? asset(user.avatarPath) : asset('assets/images/default_avatar.jpg') }}?v={{ 'now'|date('U') }}"
-            alt="Аватар пользователя"
-            class="user-avatar {% if not user.avatarPath %}default-avatar{% endif %}"
-        >
+        <a href="{{ path('user_list') }}">
+            <img
+                src="{{ user.avatarPath ? asset(user.avatarPath) : asset('assets/images/default_avatar.jpg') }}?v={{ 'now'|date('U') }}"
+                alt="Аватар пользователя"
+                class="user-avatar {% if not user.avatarPath %}default-avatar{% endif %}"
+            >
+        </a>
     </div>
 
     <div class="user-profile-container">
         <h2>Профиль пользователя</h2>
+
+        {% if is_granted('ROLE_ADMIN') %}
+            <div class="admin-badge">
+                <span class="admin-check">✓</span>
+                <span>Администратор</span>
+            </div>
+        {% endif %}
+
         <ul class="user-details">
             <li><span>Фамилия:</span> <span>{{ user.lastName }}</span></li>
             <li><span>Имя:</span> <span>{{ user.firstName }}</span></li>
@@ -43,7 +53,7 @@
             {% endif %}
         </ul>
         <div class="button-group">
-            <button onclick="window.location.href='{{ path('user_register') }}'">Создать</button>
+            <button onclick="window.location.href='{{ path('logout') }}'">Выйти</button>
             <button onclick="window.location.href='{{ path('user_edit', {'id': user.id}) }}'">Изменить</button>
             <button onclick="window.location.href='{{ path('user_delete', {'id': user.id}) }}'">Удалить</button>
         </div>
