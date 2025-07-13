@@ -7,6 +7,7 @@ use App\Entity\User;
 use App\Repository\UserRepository;
 use App\Service\UserNormalizer\UserNormalizerInterface;
 use InvalidArgumentException;
+use RuntimeException;
 
 class UserValidator implements UserValidatorInterface
 {
@@ -15,7 +16,9 @@ class UserValidator implements UserValidatorInterface
         'last_name',
         'gender',
         'birth_date',
-        'email'
+        'email',
+        'password',
+        'roles'
     ];
     private const ALLOWED_FIELDS = [
         'first_name',
@@ -88,5 +91,14 @@ class UserValidator implements UserValidatorInterface
 
             $user->{$setter}($value);
         }
+    }
+
+    public function isValidPassword(string $password, string $confirmPassword): bool
+    {
+        if ($plainPassword !== $passwordConfirm) {
+            throw new RuntimeException('Passwords do not match');
+        }
+
+        return true;
     }
 }

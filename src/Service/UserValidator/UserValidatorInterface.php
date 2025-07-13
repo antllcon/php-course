@@ -5,6 +5,7 @@ namespace App\Service\UserValidator;
 
 use App\Entity\User;
 use InvalidArgumentException;
+use RuntimeException;
 
 interface UserValidatorInterface
 {
@@ -24,4 +25,9 @@ interface UserValidatorInterface
      * @throws InvalidArgumentException
      */
     public function updateAllowedFields(User $user, array $data): void;
+
+    /**
+     * @return bool
+     */
+    public function isValidPassword(string $password, string $confirmPassword): bool;
 }
