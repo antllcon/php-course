@@ -4,20 +4,25 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use DateTimeImmutable;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     public function __construct(
-        private ?int $id = null,
-        private string $firstName,
-        private string $lastName,
-        private ?string $middleName,
-        private string $gender,
+        private ?int              $id = null,
+        private string            $firstName,
+        private string            $lastName,
+        private ?string           $middleName,
+        private string            $gender,
         private DateTimeImmutable $birthDate,
-        private string $email,
-        private ?string $phone,
-        private ?string $avatarPath
-    ) {
+        private string            $email,
+        private ?string           $phone,
+        private ?string           $avatarPath,
+        private string            $password,
+        private array             $roles
+    )
+    {
     }
 
     public function getId(): ?int
@@ -108,6 +113,37 @@ class User
     public function setAvatarPath(?string $avatarPath): void
     {
         $this->avatarPath = $avatarPath;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
+    }
+
+    public function setPassword(string $password): void
+    {
+        $this->password = $password;
+    }
+
+    public function getRoles(): array
+    {
+        return $this->roles;
+    }
+
+    public function setRoles(array $roles): void
+    {
+        $this->roles = $roles;
+    }
+
+
+    public function eraseCredentials(): void
+    {
+        // $this->password = null;
+    }
+
+    public function getUserIdentifier(): string
+    {
+        return $this->email;
     }
 
     public function toArray(): array

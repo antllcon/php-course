@@ -6,6 +6,9 @@
 
     <entity name="App\Entity\User" table="user">
         <id name="id" type="integer" column="user_id">
+            <options>
+                <option name="unsigned">true</option>
+            </options>
             <generator strategy="AUTO"/>
         </id>
 
@@ -17,6 +20,8 @@
         <field name="email" type="string" column="email" length="255" unique="true" nullable="false"/>
         <field name="phone" type="string" column="phone" length="255" unique="true" nullable="true"/>
         <field name="avatarPath" type="string" column="avatar_path" length="255" nullable="true"/>
+        <field name="password" type="string" column="password" length="255" nullable="false"/>
+        <field name="roles" type="json" column="roles" nullable="false"/>
     </entity>
 
 </doctrine-mapping>
