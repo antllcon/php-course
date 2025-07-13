@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS `user`
     `email`       VARCHAR(255) NOT NULL,
     `phone`       VARCHAR(255) DEFAULT NULL,
     `avatar_path` VARCHAR(255) DEFAULT NULL,
+    `password`    VARCHAR(255) NOT NULL,
+    `roles`       JSON NOT NULL,
 
     PRIMARY KEY (`user_id`),
     UNIQUE INDEX `email_idx` (`email`),
