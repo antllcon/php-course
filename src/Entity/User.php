@@ -4,10 +4,9 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use DateTimeImmutable;
-use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
-use Symfony\Component\Security\Core\User\UserInterface;
+use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 
-class User implements UserInterface, PasswordAuthenticatedUserInterface
+class User
 {
     public function __construct(
         private ?int              $id = null,
@@ -23,6 +22,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         private array             $roles
     )
     {
+        if (empty($this->roles)) {
+            $this->roles[] = [UserRole::USER];
+        }
     }
 
     public function getId(): ?int
@@ -132,6 +134,12 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function setRoles(array $roles): void
     {
+        foreach ($roles as $role) {
+            if (!UserRole::isValid($role)) {
+                throw new UnsupportedUserException(sprintf('"%s" is not a supported role', $role));
+            }
+        }
+
         $this->roles = $roles;
     }
 
