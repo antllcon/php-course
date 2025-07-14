@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Security;
 
 use App\Repository\UserRepository;
-use App\Entity\User as AppUser;
 use Symfony\Component\Security\Core\Exception\UnsupportedUserException;
 use Symfony\Component\Security\Core\Exception\UserNotFoundException;
 use Symfony\Component\Security\Core\User\UserInterface;

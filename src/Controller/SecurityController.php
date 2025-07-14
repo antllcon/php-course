@@ -13,6 +13,10 @@ class SecurityController extends AbstractController
 {
     public function login(AuthenticationUtils $authenticationUtils): Response
     {
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return $this->redirectToRoute('user_list');
+        }
+
         $currentUser = $this->getUser();
 
         if ($currentUser instanceof SecurityUser) {

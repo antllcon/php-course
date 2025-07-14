@@ -60,6 +60,10 @@ class UserController extends AbstractController
 
     public function registerForm(): Response
     {
+        if ($this->isGranted('IS_AUTHENTICATED_FULLY')) {
+            return $this->redirectToRoute('user_list');
+        }
+
         return $this->render('user/register_form.html.twig');
     }
 
