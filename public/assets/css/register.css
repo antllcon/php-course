@@ -24,6 +24,7 @@ input[type="text"],
 input[type="email"],
 input[type="tel"],
 input[type="date"],
+input[type="password"],
 select {
     width: 100%;
     padding: 12px;
@@ -115,35 +116,8 @@ select:focus {
     text-decoration: underline;
 }
 
-.password-strength {
-    margin-top: 5px;
-    font-size: 12px;
-    color: #7f8c8d;
-}
 
-.password-match {
-    margin-top: 5px;
-    font-size: 12px;
-}
-
-.password-match.valid {
-    color: #4caf50;
-}
-
-.password-match.invalid {
-    color: #f44336;
-}
-
-/* Иконка показа пароля */
-.password-toggle {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    color: #7f8c8d;
-}
-
-.password-wrapper {
-    position: relative;
+input[type="password"]:focus {
+    border-color: #3498db;
+    outline: none;
 }

@@ -87,18 +87,14 @@
                        placeholder="+7 (XXX) XXX-XX-XX">
             </div>
 
-            <div class="form-group password-wrapper">
+            <div class="form-group">
                 <label for="password">Пароль</label>
                 <input type="password" id="password" name="password" required>
-                <span class="password-toggle">👁️</span>
-                <div class="password-strength">Надежность пароля: средняя</div>
             </div>
 
-            <div class="form-group password-wrapper">
+            <div class="form-group">
                 <label for="password_confirm">Подтвердите пароль</label>
                 <input type="password" id="password_confirm" name="password_confirm" required>
-                <span class="password-toggle">👁️</span>
-                <div class="password-match">Пароли должны совпадать</div>
             </div>
 
             {% if is_granted('ROLE_ADMIN') %}
@@ -186,26 +182,6 @@
                     formattedPhone = !x[2] ? x[1] : '+' + x[1] + ' (' + x[2] + ')' + (x[3] ? ' ' + x[3] : '') + (x[4] ? '-' + x[4] : '') + (x[5] ? '-' + x[5] : '');
                 }
                 phoneInput.value = formattedPhone;
-            }
-        });
-
-        document.querySelectorAll('.password-toggle').forEach(toggle => {
-            toggle.addEventListener('click', function() {
-                const input = this.previousElementSibling;
-                input.type = input.type === 'password' ? 'text' : 'password';
-            });
-        });
-
-        document.getElementById('password_confirm').addEventListener('input', function() {
-            const matchElement = this.nextElementSibling.nextElementSibling;
-            if (this.value === document.getElementById('password').value) {
-                matchElement.textContent = 'Пароли совпадают';
-                matchElement.classList.add('valid');
-                matchElement.classList.remove('invalid');
-            } else {
-                matchElement.textContent = 'Пароли не совпадают';
-                matchElement.classList.add('invalid');
-                matchElement.classList.remove('valid');
             }
         });
     </script>
